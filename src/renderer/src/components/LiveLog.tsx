@@ -23,12 +23,23 @@ function formatTimestamp(ts: number): string {
 
 export default function LiveLog({ entries }: LiveLogProps): JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const shouldFollowRef = useRef(true)
 
   useEffect(() => {
-    if (scrollRef.current) {
+    if (scrollRef.current && shouldFollowRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [entries.length])
+
+  function handleScroll(): void {
+    const container = scrollRef.current
+    if (!container) return
+
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight
+
+    shouldFollowRef.current = distanceFromBottom < 32
+  }
 
   return (
     <div className="flex h-full flex-col rounded-md border border-[#27272a] bg-[#0a0a0c]">
@@ -45,6 +56,7 @@ export default function LiveLog({ entries }: LiveLogProps): JSX.Element {
       {/* Log body */}
       <div
         ref={scrollRef}
+        onScroll={handleScroll}
         className="flex-1 overflow-y-auto p-2 font-mono text-[10px] leading-5 select-text"
       >
         {entries.length === 0 && (
