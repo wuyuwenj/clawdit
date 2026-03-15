@@ -1,6 +1,6 @@
 import { tavily } from '@tavily/core'
 
-export async function runRecon(): Promise<string> {
+export async function runRecon(onLog?: (message: string) => void): Promise<string> {
   const client = tavily({ apiKey: process.env.TAVILY_API_KEY ?? '' })
 
   const queries = [
@@ -10,19 +10,30 @@ export async function runRecon(): Promise<string> {
   ]
 
   try {
-    const results = await Promise.allSettled(
-      queries.map(q => client.search(q, { maxResults: 3 }))
+    const results = await Promise.all(
+      queries.map(async (query) => {
+        onLog?.(`[Tavily] Query: ${query}`)
+
+        try {
+          const response = await client.search(query, { maxResults: 3 })
+          const snippets = (response.results ?? [])
+            .map(result => result.content?.slice(0, 300) ?? '')
+            .filter(Boolean)
+
+          onLog?.(`[Tavily] Retrieved ${response.results?.length ?? 0} results for: ${query}`)
+          return snippets
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : 'Unknown error'
+          onLog?.(`[Tavily] Query failed: ${query} (${message})`)
+          return []
+        }
+      })
     )
 
     const summaries: string[] = []
 
     for (const result of results) {
-      if (result.status === 'fulfilled' && result.value.results) {
-        for (const r of result.value.results) {
-          const snippet = r.content?.slice(0, 300) ?? ''
-          if (snippet) summaries.push(snippet)
-        }
-      }
+      summaries.push(...result)
     }
 
     const combined = summaries.join('\n\n').slice(0, 2000)

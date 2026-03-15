@@ -21,9 +21,10 @@ interface CategoryBarProps {
   label: string
   score: number
   weight: number
+  note?: string
 }
 
-function CategoryBar({ label, score, weight }: CategoryBarProps): JSX.Element {
+function CategoryBar({ label, score, weight, note }: CategoryBarProps): JSX.Element {
   const barColor =
     score > 80 ? 'bg-cyan-500' : score >= 50 ? 'bg-amber-500' : 'bg-red-500'
   const textColor =
@@ -33,7 +34,9 @@ function CategoryBar({ label, score, weight }: CategoryBarProps): JSX.Element {
     <div className="flex items-center gap-3">
       <div className="w-44 shrink-0">
         <div className="text-[11px] font-medium text-gray-300">{label}</div>
-        <div className="text-[10px] text-gray-600">Weight: {Math.round(weight * 100)}%</div>
+        <div className="text-[10px] text-gray-600">
+          {note ?? `Weight: ${Math.round(weight * 100)}%`}
+        </div>
       </div>
       <div className="flex-1">
         <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#27272a]">
@@ -198,6 +201,11 @@ export default function FindingsPanel({ state, onReset, onViewLogs }: FindingsPa
   const hasFindings = findings.length > 0
 
   const totalAttacks = state.categories.reduce((sum, c) => sum + c.results.length, 0)
+  const scoredCategories = state.categories.filter((cat) => cat.status === 'complete')
+  const scoredWeightTotal = scoredCategories.reduce(
+    (sum, cat) => sum + (CATEGORY_WEIGHTS[cat.category] ?? 0),
+    0
+  )
 
   return (
     <div className="relative flex h-full flex-col overflow-y-auto bg-[#0a0a0c]">
@@ -259,12 +267,23 @@ export default function FindingsPanel({ state, onReset, onViewLogs }: FindingsPa
                   </div>
                   <span className="w-10 text-right text-xs text-gray-600">—</span>
                 </div>
+              ) : cat.status !== 'complete' ? (
+                <div key={cat.category} className="flex items-center gap-3">
+                  <div className="w-44 shrink-0">
+                    <div className="text-[11px] font-medium text-gray-500">{CATEGORY_LABELS[cat.category]}</div>
+                    <div className="text-[10px] text-gray-600">Not executed</div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-[#27272a]" />
+                  </div>
+                  <span className="w-10 text-right text-xs text-gray-600">—</span>
+                </div>
               ) : (
                 <CategoryBar
                   key={cat.category}
                   label={CATEGORY_LABELS[cat.category]}
                   score={cat.score}
-                  weight={CATEGORY_WEIGHTS[cat.category]}
+                  weight={scoredWeightTotal > 0 ? (CATEGORY_WEIGHTS[cat.category] ?? 0) / scoredWeightTotal : 0}
                 />
               )
             )}

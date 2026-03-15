@@ -239,7 +239,11 @@ export default function App(): JSX.Element {
       dispatch({ type: 'START_SCAN', targetUrl: config.targetUrl })
       setPaused(false)
       setNextAttack(null)
-      await window.shellclaw.startScan(config)
+      const result = await window.shellclaw.startScan(config)
+
+      if (result.error) {
+        dispatch({ type: 'SCAN_EVENT', event: { type: 'error', message: result.error } })
+      }
     },
     []
   )

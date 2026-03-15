@@ -15,11 +15,14 @@ import {
 import { probeTarget, sendAttack, sendMultiTurnAttack } from './openclaw'
 import { runRecon } from './tavily'
 import {
+  createGeneratedAttackForCategory,
   getTemplatesForCategory,
   getIndirectTemplatesForCategory,
   getCalendarTemplatesForCategory,
+  getTemplatePromptsForCategory,
   getAllCategories
 } from './attack-library'
+import { generateAttackVariants } from './nebius'
 import { evaluate } from './evaluator'
 
 function delay(ms: number): Promise<void> {
@@ -36,11 +39,11 @@ function computeCategoryScore(results: AttackResult[]): number {
 }
 
 function computeOverallScore(categories: CategoryResult[]): number {
-  const active = categories.filter(c => c.status !== 'skipped')
-  const totalWeight = active.reduce((sum, c) => sum + (CATEGORY_WEIGHTS[c.category] ?? 0.25), 0)
+  const scored = categories.filter(c => c.status === 'complete')
+  const totalWeight = scored.reduce((sum, c) => sum + (CATEGORY_WEIGHTS[c.category] ?? 0.25), 0)
   if (totalWeight === 0) return 100
   let score = 0
-  for (const cat of active) {
+  for (const cat of scored) {
     const weight = CATEGORY_WEIGHTS[cat.category] ?? 0.25
     score += cat.score * (weight / totalWeight)
   }
@@ -102,7 +105,7 @@ export async function runScan(
   emit({ type: 'phase', phase: ScanPhase.RECON })
   log(emit, 'Running threat intelligence reconnaissance...')
 
-  const reconSummary = await runRecon()
+  const reconSummary = await runRecon((message) => log(emit, message))
   state.reconSummary = reconSummary
   log(emit, `Recon complete. Gathered ${reconSummary.length} chars of threat intel.`)
 
@@ -140,8 +143,11 @@ export async function runScan(
   // --- Phase 3: Plan ---
   emit({ type: 'phase', phase: ScanPhase.PLANNING })
   log(emit, `Planning attack vectors across ${categories.length} categories...`)
+  const generatedAttackTasks = new Map<AttackCategory, Promise<Attack | null>>()
 
   for (const catResult of categories) {
+    let plannedAttacks: Attack[] = []
+
     if (catResult.category === AttackCategory.INDIRECT_INJECTION) {
       if (!discoveredEmail) {
         catResult.status = 'skipped'
@@ -152,17 +158,58 @@ export async function runScan(
         continue
       }
 
-      const templates = getIndirectTemplatesForCategory(discoveredEmail)
-      catResult.attacks.push(...templates)
+      plannedAttacks = getIndirectTemplatesForCategory(discoveredEmail)
     } else if (catResult.category === AttackCategory.CALENDAR_INJECTION) {
-      const templates = getCalendarTemplatesForCategory()
-      catResult.attacks.push(...templates)
+      plannedAttacks = getCalendarTemplatesForCategory()
     } else {
-      const templates = getTemplatesForCategory(catResult.category)
-      catResult.attacks.push(...templates)
+      plannedAttacks = getTemplatesForCategory(catResult.category)
     }
 
+    catResult.attacks.push(...plannedAttacks)
+
     log(emit, `${catResult.category}: ${catResult.attacks.length} attacks planned`)
+
+    generatedAttackTasks.set(
+      catResult.category,
+      (async (): Promise<Attack | null> => {
+        log(emit, `${catResult.category}: generating recon-based variant in background`)
+
+        try {
+          const basePrompts = getTemplatePromptsForCategory(catResult.category)
+          const generatedVariants = await generateAttackVariants(
+            catResult.category,
+            basePrompts,
+            probe.response,
+            reconSummary
+          )
+
+          const generatedVariant = generatedVariants[0]
+          if (!generatedVariant) {
+            log(emit, `${catResult.category}: no recon-generated attacks returned`, 'warn')
+            return null
+          }
+
+          const generatedAttack = createGeneratedAttackForCategory(
+            catResult.category,
+            generatedVariant.name,
+            generatedVariant.prompt,
+            discoveredEmail
+          )
+
+          if (!generatedAttack) {
+            log(emit, `${catResult.category}: generated variant could not be constructed`, 'warn')
+            return null
+          }
+
+          log(emit, `${catResult.category}: background variant ready "${generatedAttack.name}"`)
+          return generatedAttack
+        } catch (err: unknown) {
+          const msg = err instanceof Error ? err.message : 'Unknown error'
+          log(emit, `${catResult.category}: failed to generate recon-based variant (${msg})`, 'warn')
+          return null
+        }
+      })()
+    )
   }
 
   const totalAttacks = categories.reduce((sum, c) => sum + c.attacks.length, 0)
@@ -251,6 +298,28 @@ export async function runScan(
     }
   }
 
+  async function maybeRunGeneratedAttack(catResult: CategoryResult): Promise<void> {
+    const generatedTask = generatedAttackTasks.get(catResult.category)
+    if (!generatedTask || controls?.abort.aborted) return
+
+    const generatedAttack = await generatedTask
+    if (!generatedAttack || controls?.abort.aborted) return
+
+    catResult.attacks.push(generatedAttack)
+
+    if (config.stepMode && controls?.waitForStep) {
+      emit({ type: 'paused', nextAttack: generatedAttack })
+      log(emit, `[PAUSED] Waiting to run: ${generatedAttack.name}`, 'info')
+      await controls.waitForStep()
+      if (controls.abort.aborted) return
+    }
+
+    if (controls?.checkPause) await controls.checkPause()
+    if (controls?.abort.aborted) return
+
+    await executeAttack(generatedAttack, catResult)
+  }
+
   if (config.stepMode) {
     // Step mode: sequential, one attack at a time, wait for user click
     for (const catResult of activeCategories) {
@@ -271,6 +340,10 @@ export async function runScan(
         if (controls?.abort.aborted) break
 
         await executeAttack(attack, catResult)
+      }
+
+      if (!controls?.abort.aborted) {
+        await maybeRunGeneratedAttack(catResult)
       }
 
       catResult.score = computeCategoryScore(catResult.results)
@@ -303,6 +376,8 @@ export async function runScan(
         await executeAttack(attack, catResult)
         await delay(200)
       }
+
+      await maybeRunGeneratedAttack(catResult)
 
       catResult.score = computeCategoryScore(catResult.results)
       catResult.status = 'complete'
