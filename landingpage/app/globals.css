@@ -566,6 +566,11 @@ a.button {
   background: rgba(14, 27, 25, 0.94);
 }
 
+.dashboard-category--cyan {
+  border-color: rgba(99, 230, 255, 0.3);
+  background: rgba(13, 25, 30, 0.94);
+}
+
 .dashboard-category__header,
 .dashboard-category__footer {
   display: flex;
@@ -610,6 +615,10 @@ a.button {
 
 .dashboard-category__pulse--teal {
   background: var(--teal);
+}
+
+.dashboard-category__pulse--cyan {
+  background: var(--cyan);
 }
 
 .dashboard-category__footer {
@@ -1180,6 +1189,10 @@ a.button {
   border-color: rgba(246, 110, 124, 0.18);
 }
 
+.mini-module--teal {
+  border-color: rgba(62, 228, 207, 0.18);
+}
+
 .showcase-panel__feed,
 .showcase-panel__evidence {
   padding: 18px;
@@ -1227,7 +1240,7 @@ a.button {
 }
 
 .category-grid {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .category-card__top {
