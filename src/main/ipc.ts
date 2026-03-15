@@ -4,6 +4,7 @@ import { join } from 'path'
 import { homedir } from 'os'
 import { ScanConfig, ScanState, ScanEvent } from '@shared/types'
 import { runScan, ScanControls } from './lib/scanner'
+import { GatewaySetupResult } from './lib/gateway-setup'
 
 let currentScanState: ScanState | null = null
 let isScanning = false
@@ -15,6 +16,13 @@ let stepResolver: (() => void) | null = null
 let isPaused = false
 let pauseResolver: (() => void) | null = null
 let pausePromise: Promise<void> | null = null
+
+// Preloaded gateway result from startup validation
+let preloadedGatewayResult: GatewaySetupResult | null = null
+
+export function setPreloadedGatewayResult(result: GatewaySetupResult): void {
+  preloadedGatewayResult = result
+}
 
 export function registerIpcHandlers(mainWindow: BrowserWindow): void {
   ipcMain.handle('scan:start', async (_event, config: ScanConfig) => {
@@ -163,5 +171,9 @@ export function registerIpcHandlers(mainWindow: BrowserWindow): void {
     } catch {
       return null
     }
+  })
+
+  ipcMain.handle('get-preloaded-gateway', async () => {
+    return preloadedGatewayResult
   })
 }

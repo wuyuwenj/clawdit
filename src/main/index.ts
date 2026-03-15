@@ -3,7 +3,8 @@ import { resolve } from 'path'
 import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import { registerIpcHandlers } from './ipc'
+import { registerIpcHandlers, setPreloadedGatewayResult } from './ipc'
+import { setupGateway, GatewaySetupResult } from './lib/gateway-setup'
 
 // Load .env from project root
 config({ path: resolve(__dirname, '../../.env') })
@@ -43,8 +44,14 @@ function createWindow(): void {
   registerIpcHandlers(mainWindow)
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   electronApp.setAppUserModelId('com.clawdit.app')
+
+  // Run gateway setup BEFORE creating window
+  console.log('[app] Running gateway setup...')
+  const gatewayResult = await setupGateway()
+  setPreloadedGatewayResult(gatewayResult)
+  console.log('[app] Gateway setup complete:', gatewayResult.success ? 'success' : gatewayResult.errorType)
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)

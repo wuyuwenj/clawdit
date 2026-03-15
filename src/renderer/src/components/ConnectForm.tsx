@@ -4,26 +4,108 @@ interface ConnectFormProps {
   onStartScan: (config: { targetUrl: string; authToken: string; stepMode?: boolean }) => Promise<void>
 }
 
+type StatusBanner =
+  | { type: 'success'; message: string }
+  | { type: 'warning'; message: string }
+  | { type: 'error'; message: string }
+  | null
+
 export default function ConnectForm({ onStartScan }: ConnectFormProps): JSX.Element {
   const [targetUrl, setTargetUrl] = useState('')
   const [authToken, setAuthToken] = useState('')
   const [stepMode, setStepMode] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [autoDetected, setAutoDetected] = useState(false)
+  const [statusBanner, setStatusBanner] = useState<StatusBanner>(null)
 
-  // Auto-fill from ~/.openclaw/openclaw.json on mount
+  // Use preloaded gateway result (validated at startup) or fall back to reading config
   useEffect(() => {
-    window.shellclaw.readOpenClawConfig().then((config) => {
-      if (config?.gateway) {
-        const port = config.gateway.port || 18789
-        const token = config.gateway.auth?.token || ''
-        setTargetUrl(`http://127.0.0.1:${port}`)
-        if (token) setAuthToken(token)
-        setAutoDetected(true)
+    window.shellclaw.getPreloadedGateway().then((result) => {
+      if (result) {
+        // We have a preloaded result from startup validation
+        if (result.config) {
+          setTargetUrl(result.config.url)
+          setAuthToken(result.config.token)
+        }
+
+        if (result.success) {
+          if (result.autoFixed) {
+            setStatusBanner({
+              type: 'success',
+              message: 'Auto-enabled HTTP endpoints and restarted gateway'
+            })
+          } else {
+            setStatusBanner({
+              type: 'success',
+              message: 'Auto-detected OpenClaw config from ~/.openclaw/openclaw.json'
+            })
+          }
+        } else {
+          // Show error banners based on error type
+          switch (result.errorType) {
+            case 'no_config':
+              // No banner for missing config - just leave form empty
+              break
+            case 'no_token':
+              setStatusBanner({
+                type: 'warning',
+                message: 'OpenClaw config found but no auth token configured'
+              })
+              break
+            case 'gateway_down':
+              setStatusBanner({
+                type: 'error',
+                message: result.error || 'Could not connect to gateway'
+              })
+              break
+            case 'auth_failed':
+              setStatusBanner({
+                type: 'error',
+                message: 'Gateway authentication failed - check your token'
+              })
+              break
+            case 'auto_fix_failed':
+              setStatusBanner({
+                type: 'error',
+                message: result.error || 'Attempted to enable HTTP endpoints but gateway restart failed'
+              })
+              break
+          }
+        }
+        return
       }
+
+      // Fallback: read config file directly (shouldn't happen normally)
+      window.shellclaw.readOpenClawConfig().then((config) => {
+        if (config?.gateway) {
+          const port = config.gateway.port || 18789
+          const token = config.gateway.auth?.token || ''
+          setTargetUrl(`http://127.0.0.1:${port}`)
+          if (token) setAuthToken(token)
+          setStatusBanner({
+            type: 'success',
+            message: 'Auto-detected OpenClaw config from ~/.openclaw/openclaw.json'
+          })
+        }
+      }).catch(() => {
+        // No config found, user fills manually
+      })
     }).catch(() => {
-      // No config found, user fills manually
+      // Preload not available, try reading config directly
+      window.shellclaw.readOpenClawConfig().then((config) => {
+        if (config?.gateway) {
+          const port = config.gateway.port || 18789
+          const token = config.gateway.auth?.token || ''
+          setTargetUrl(`http://127.0.0.1:${port}`)
+          if (token) setAuthToken(token)
+          setStatusBanner({
+            type: 'success',
+            message: 'Auto-detected OpenClaw config from ~/.openclaw/openclaw.json'
+          })
+        }
+      }).catch(() => {
+        // No config found
+      })
     })
   }, [])
 
@@ -83,10 +165,18 @@ export default function ConnectForm({ onStartScan }: ConnectFormProps): JSX.Elem
           onSubmit={handleSubmit}
           className="rounded-xl border border-zinc-800 bg-[#18181b] p-6 shadow-2xl"
         >
-          {/* Auto-detect badge */}
-          {autoDetected && (
-            <div className="mb-4 rounded-lg border border-emerald-900/50 bg-emerald-950/30 px-3 py-2 text-xs text-emerald-400">
-              Auto-detected OpenClaw config from ~/.openclaw/openclaw.json
+          {/* Status banner */}
+          {statusBanner && (
+            <div
+              className={`mb-4 rounded-lg border px-3 py-2 text-xs ${
+                statusBanner.type === 'success'
+                  ? 'border-emerald-900/50 bg-emerald-950/30 text-emerald-400'
+                  : statusBanner.type === 'warning'
+                    ? 'border-amber-900/50 bg-amber-950/30 text-amber-400'
+                    : 'border-red-900/50 bg-red-950/30 text-red-400'
+              }`}
+            >
+              {statusBanner.message}
             </div>
           )}
 
