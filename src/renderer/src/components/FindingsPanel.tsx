@@ -205,8 +205,10 @@ export default function FindingsPanel({ state, onReset, onViewLogs }: FindingsPa
   const totalAttacks = state.categories.reduce((sum, c) => sum + c.results.length, 0)
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-[#09090b]">
-      <div className="mx-auto w-full max-w-3xl px-6 py-10">
+    <div className="relative flex h-full flex-col overflow-y-auto bg-[#09090b]">
+      {/* Drag region for window movement */}
+      <div className="drag-region sticky top-0 left-0 right-0 h-10 z-10" />
+      <div className="mx-auto w-full max-w-3xl px-6 py-10 -mt-10">
         {/* ── Error banner ──────────────────────────── */}
         {isError && (
           <div className="mb-6 rounded-lg border border-red-900/50 bg-red-950/30 px-4 py-3">

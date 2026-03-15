@@ -148,7 +148,9 @@ export default function ConnectForm({ onStartScan }: ConnectFormProps): JSX.Elem
   const canSubmit = targetUrl.trim().length > 0 && authToken.trim().length > 0 && !submitting
 
   return (
-    <div className="flex h-full w-full items-center justify-center bg-[#09090b] p-4">
+    <div className="relative flex h-full w-full items-center justify-center bg-[#09090b] p-4">
+      {/* Drag region for window movement */}
+      <div className="drag-region absolute top-0 left-0 right-0 h-10" />
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="mb-8 text-center">

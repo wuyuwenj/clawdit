@@ -60,8 +60,8 @@ export default function ScanDashboard({ state, paused, nextAttack, onPause, onSt
 
   return (
     <div className="flex h-full flex-col">
-      {/* ── Top bar ─────────────────────────────────── */}
-      <div className="flex items-center gap-4 border-b border-zinc-800 bg-[#18181b] px-4 py-3">
+      {/* ── Top bar (draggable title bar region) ─────────────────────────────────── */}
+      <div className="drag-region flex items-center gap-4 border-b border-zinc-800 bg-[#18181b] pl-20 pr-4 py-3">
         {/* Target */}
         <div className="flex items-center gap-2">
           <span className="text-xs uppercase tracking-wider text-zinc-500">Target</span>

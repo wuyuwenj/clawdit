@@ -134,3 +134,16 @@ input, button, svg, .no-transition {
 button {
   transition: background-color 150ms ease, opacity 150ms ease;
 }
+
+/* Window drag region for frameless window */
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+/* Exclude interactive elements from drag region */
+.drag-region button,
+.drag-region input,
+.drag-region a,
+.no-drag {
+  -webkit-app-region: no-drag;
+}
