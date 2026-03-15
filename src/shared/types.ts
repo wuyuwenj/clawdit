@@ -119,6 +119,64 @@ export const CATEGORY_LABELS: Record<AttackCategory, string> = {
   [AttackCategory.INDIRECT_INJECTION]: 'Indirect Injection'
 }
 
+export interface CategoryColor {
+  dot: string        // bg class for small dot indicators
+  text: string       // text class for labels/accents
+  icon: string       // text class for icon tint
+  border: string     // border class for active/running state
+  glow: string       // shadow glow for dot
+  bgSubtle: string   // bg for subtle highlights
+  borderSubtle: string // border for subtle highlights
+}
+
+export const CATEGORY_COLORS: Record<AttackCategory, CategoryColor> = {
+  [AttackCategory.PROMPT_INJECTION]: {
+    dot: 'bg-violet-500',
+    text: 'text-violet-400',
+    icon: 'text-violet-400',
+    border: 'border-violet-500/50',
+    glow: 'shadow-[0_0_5px_rgba(139,92,246,0.5)]',
+    bgSubtle: 'bg-violet-500/10',
+    borderSubtle: 'border-violet-500/20'
+  },
+  [AttackCategory.DATA_LEAKAGE]: {
+    dot: 'bg-sky-500',
+    text: 'text-sky-400',
+    icon: 'text-sky-400',
+    border: 'border-sky-500/50',
+    glow: 'shadow-[0_0_5px_rgba(14,165,233,0.5)]',
+    bgSubtle: 'bg-sky-500/10',
+    borderSubtle: 'border-sky-500/20'
+  },
+  [AttackCategory.UNAUTHORIZED_ACTIONS]: {
+    dot: 'bg-amber-500',
+    text: 'text-amber-400',
+    icon: 'text-amber-400',
+    border: 'border-amber-500/50',
+    glow: 'shadow-[0_0_5px_rgba(245,158,11,0.5)]',
+    bgSubtle: 'bg-amber-500/10',
+    borderSubtle: 'border-amber-500/20'
+  },
+  [AttackCategory.ACCESS_CONTROL]: {
+    dot: 'bg-rose-500',
+    text: 'text-rose-400',
+    icon: 'text-rose-400',
+    border: 'border-rose-500/50',
+    glow: 'shadow-[0_0_5px_rgba(244,63,94,0.5)]',
+    bgSubtle: 'bg-rose-500/10',
+    borderSubtle: 'border-rose-500/20'
+  },
+  [AttackCategory.INDIRECT_INJECTION]: {
+    dot: 'bg-teal-500',
+    text: 'text-teal-400',
+    icon: 'text-teal-400',
+    border: 'border-teal-500/50',
+    glow: 'shadow-[0_0_5px_rgba(20,184,166,0.5)]',
+    bgSubtle: 'bg-teal-500/10',
+    borderSubtle: 'border-teal-500/20'
+  }
+}
+
 export const CATEGORY_WEIGHTS: Record<AttackCategory, number> = {
   [AttackCategory.PROMPT_INJECTION]: 0.25,
   [AttackCategory.DATA_LEAKAGE]: 0.25,

@@ -1,71 +1,69 @@
-import { AttackCategory, CategoryResult, CATEGORY_LABELS } from '@shared/types'
+import { type LucideIcon, ShieldAlert, Eye, Zap, Lock, MailWarning } from 'lucide-react'
+import { AttackCategory, CategoryResult, CATEGORY_LABELS, CATEGORY_COLORS } from '@shared/types'
 
 interface CategoryCardProps {
   category: CategoryResult
+  selected?: boolean
+  onClick?: () => void
 }
 
-const CATEGORY_ICONS: Record<AttackCategory, string> = {
-  [AttackCategory.PROMPT_INJECTION]: '\u{1F6E1}',
-  [AttackCategory.DATA_LEAKAGE]: '\u{1F441}',
-  [AttackCategory.UNAUTHORIZED_ACTIONS]: '\u{26A1}',
-  [AttackCategory.ACCESS_CONTROL]: '\u{1F512}',
-  [AttackCategory.INDIRECT_INJECTION]: '\u{1F4E8}'
+const CATEGORY_ICONS: Record<AttackCategory, LucideIcon> = {
+  [AttackCategory.PROMPT_INJECTION]: ShieldAlert,
+  [AttackCategory.DATA_LEAKAGE]: Eye,
+  [AttackCategory.UNAUTHORIZED_ACTIONS]: Zap,
+  [AttackCategory.ACCESS_CONTROL]: Lock,
+  [AttackCategory.INDIRECT_INJECTION]: MailWarning
 }
 
-function getScoreColor(score: number): string {
-  if (score > 80) return 'text-emerald-400'
-  if (score >= 50) return 'text-yellow-400'
+function getScoreColor(cat: AttackCategory, score: number): string {
+  if (score > 80) return CATEGORY_COLORS[cat].text
+  if (score >= 50) return 'text-amber-400'
   return 'text-red-400'
 }
 
-function getBorderClass(status: CategoryResult['status'], score: number): string {
-  if (status === 'pending') return 'border-zinc-800'
-  if (status === 'skipped') return 'border-zinc-800'
-  if (status === 'running') return 'border-blue-500 animate-border-glow'
-  if (score > 80) return 'border-emerald-500/50'
-  if (score >= 50) return 'border-yellow-500/50'
-  return 'border-red-500/50'
+function getBorderClass(cat: AttackCategory, status: CategoryResult['status'], selected: boolean): string {
+  const color = CATEGORY_COLORS[cat]
+  if (selected) return `${color.border} ${color.bgSubtle}`
+  if (status === 'running') return `${color.border} animate-border-glow`
+  if (status === 'pending' || status === 'skipped') return 'border-[#27272a]'
+  return `${color.borderSubtle}`
 }
 
-function getStatusDot(status: CategoryResult['status'], score: number): JSX.Element {
-  if (status === 'pending') {
-    return <span className="inline-block h-2 w-2 rounded-full bg-zinc-600" />
-  }
-  if (status === 'skipped') {
-    return <span className="inline-block h-2 w-2 rounded-full bg-zinc-500" />
+function getStatusDot(cat: AttackCategory, status: CategoryResult['status']): JSX.Element {
+  const color = CATEGORY_COLORS[cat]
+  if (status === 'pending' || status === 'skipped') {
+    return <span className="inline-block h-1.5 w-1.5 rounded-full bg-zinc-600" />
   }
   if (status === 'running') {
-    return <span className="inline-block h-2 w-2 rounded-full bg-blue-500 animate-phase-pulse" />
+    return <span className={`inline-block h-1.5 w-1.5 rounded-full ${color.dot} animate-phase-pulse ${color.glow}`} />
   }
-  // complete
-  const color = score > 80 ? 'bg-emerald-500' : score >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-  return <span className={`inline-block h-2 w-2 rounded-full ${color}`} />
+  return <span className={`inline-block h-1.5 w-1.5 rounded-full ${color.dot} ${color.glow}`} />
 }
 
-export default function CategoryCard({ category }: CategoryCardProps): JSX.Element {
+export default function CategoryCard({ category, selected, onClick }: CategoryCardProps): JSX.Element {
   const { category: cat, status, score, attacks, results } = category
   const label = CATEGORY_LABELS[cat]
-  const icon = CATEGORY_ICONS[cat]
+  const Icon = CATEGORY_ICONS[cat]
+  const color = CATEGORY_COLORS[cat]
   const findingsCount = results.filter((r) => r.compromised).length
 
   return (
     <div
-      className={`rounded-lg border bg-[#18181b] p-3 ${getBorderClass(status, score)}`}
+      onClick={onClick}
+      className={`cursor-pointer rounded-md border bg-[#121214] p-3 transition-colors ${getBorderClass(cat, status, !!selected)}`}
     >
       {/* Header row */}
       <div className="mb-2 flex items-center gap-2">
-        <span className="text-base" role="img" aria-label={label}>
-          {icon}
-        </span>
-        <span className="flex-1 text-xs font-semibold uppercase tracking-wider text-zinc-300">
+        <Icon className={`h-3.5 w-3.5 shrink-0 ${color.icon}`} />
+        <span className="flex-1 text-[10px] font-bold uppercase tracking-wider text-gray-300">
           {label}
         </span>
-        {getStatusDot(status, score)}
+        {getStatusDot(cat, status)}
       </div>
 
       {/* Stats row */}
       <div className="flex items-end justify-between">
-        <div className="flex gap-3 text-xs text-zinc-500">
+        <div className="flex gap-3 text-[10px] text-gray-500">
           <span>
             {attacks.length} attack{attacks.length !== 1 ? 's' : ''}
           </span>
@@ -76,18 +74,18 @@ export default function CategoryCard({ category }: CategoryCardProps): JSX.Eleme
           )}
         </div>
         {status === 'complete' && (
-          <span className={`text-lg font-bold tabular-nums ${getScoreColor(score)}`}>
+          <span className={`text-lg font-bold tabular-nums ${getScoreColor(cat, score)}`}>
             {score}
           </span>
         )}
         {status === 'running' && (
-          <span className="text-xs text-blue-400">Running</span>
+          <span className={`text-[10px] font-medium ${color.text}`}>Running</span>
         )}
         {status === 'skipped' && (
-          <span className="text-xs text-zinc-500">Skipped</span>
+          <span className="text-[10px] text-gray-600">Skipped</span>
         )}
         {status === 'pending' && (
-          <span className="text-xs text-zinc-600">Pending</span>
+          <span className="text-[10px] text-gray-600">Pending</span>
         )}
       </div>
     </div>

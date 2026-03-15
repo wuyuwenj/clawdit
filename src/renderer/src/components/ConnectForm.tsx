@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, type FormEvent } from 'react'
+import { ShieldCheck, Lock, AlertTriangle } from 'lucide-react'
 
 interface ConnectFormProps {
   onStartScan: (config: { targetUrl: string; authToken: string; stepMode?: boolean }) => Promise<void>
@@ -142,110 +143,123 @@ export default function ConnectForm({ onStartScan }: ConnectFormProps): JSX.Elem
         setSubmitting(false)
       }
     },
-    [targetUrl, authToken, isValidUrl, onStartScan]
+    [targetUrl, authToken, stepMode, isValidUrl, onStartScan]
   )
 
   const canSubmit = targetUrl.trim().length > 0 && authToken.trim().length > 0 && !submitting
 
   return (
-    <div className="relative flex h-full w-full items-center justify-center bg-[#09090b] p-4">
+    <div className="relative flex h-full w-full items-center justify-center bg-[#0a0a0c] p-4 font-sans">
       {/* Drag region for window movement */}
       <div className="drag-region absolute top-0 left-0 right-0 h-10" />
       <div className="w-full max-w-md">
+
         {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="mb-2 text-3xl font-bold tracking-tight text-zinc-100">
+        <div className="mb-10 text-center">
+          <div className="mb-4 inline-flex items-center justify-center rounded-lg border border-zinc-800 bg-[#121214] p-3 shadow-sm">
+            <ShieldCheck className="h-6 w-6 text-zinc-300" strokeWidth={1.5} />
+          </div>
+          <h1 className="mb-2 text-2xl font-semibold tracking-tight text-gray-100">
             Clawdit
           </h1>
-          <p className="text-sm text-zinc-500">
-            Autonomous Red-Team Harness for OpenClaw Agents
+          <p className="text-xs font-medium uppercase tracking-widest text-gray-500">
+            Autonomous local security auditing for OpenClaw
           </p>
         </div>
 
         {/* Card */}
         <form
           onSubmit={handleSubmit}
-          className="rounded-xl border border-zinc-800 bg-[#18181b] p-6 shadow-2xl"
+          className="rounded-xl border border-[#27272a] bg-[#121214] p-7 shadow-2xl"
         >
           {/* Status banner */}
           {statusBanner && (
             <div
-              className={`mb-4 rounded-lg border px-3 py-2 text-xs ${
+              className={`mb-5 flex items-center gap-2 rounded-md border px-3 py-2 ${
                 statusBanner.type === 'success'
-                  ? 'border-emerald-900/50 bg-emerald-950/30 text-emerald-400'
+                  ? 'border-cyan-900/30 bg-cyan-950/20'
                   : statusBanner.type === 'warning'
-                    ? 'border-amber-900/50 bg-amber-950/30 text-amber-400'
-                    : 'border-red-900/50 bg-red-950/30 text-red-400'
+                    ? 'border-amber-900/30 bg-amber-950/20'
+                    : 'border-red-500/20 bg-red-500/10'
               }`}
             >
-              {statusBanner.message}
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  statusBanner.type === 'success'
+                    ? 'bg-cyan-500 shadow-[0_0_5px_rgba(34,211,238,0.5)]'
+                    : statusBanner.type === 'warning'
+                      ? 'bg-amber-500 shadow-[0_0_5px_rgba(245,158,11,0.5)]'
+                      : 'bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)]'
+                }`}
+              ></span>
+              <span
+                className={`text-[10px] uppercase tracking-wider ${
+                  statusBanner.type === 'success'
+                    ? 'text-cyan-400'
+                    : statusBanner.type === 'warning'
+                      ? 'text-amber-400'
+                      : 'text-red-400'
+                }`}
+              >
+                {statusBanner.message}
+              </span>
             </div>
           )}
 
           {/* Target URL */}
-          <div className="mb-4">
-            <label
-              htmlFor="target-url"
-              className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-400"
-            >
-              Target URL
+          <div className="mb-5">
+            <label htmlFor="target-url" className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-gray-400">
+              Target Agent URL
             </label>
             <input
               id="target-url"
               type="text"
               value={targetUrl}
-              onChange={(e) => {
-                setTargetUrl(e.target.value)
-                setError(null)
-              }}
-              placeholder="https://localhost:8080 or gateway URL"
+              onChange={(e) => { setTargetUrl(e.target.value); setError(null) }}
+              placeholder="http://127.0.0.1:18789"
               autoFocus
               spellCheck={false}
               autoComplete="off"
-              className="w-full rounded-lg border border-zinc-700 bg-[#09090b] px-3 py-2.5 font-mono text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
+              className="w-full rounded-md border border-zinc-800 bg-[#0a0a0c] px-3 py-2.5 font-mono text-sm text-gray-200 placeholder-zinc-700 outline-none transition-colors focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50"
             />
           </div>
 
           {/* Auth Token */}
           <div className="mb-6">
-            <label
-              htmlFor="auth-token"
-              className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-400"
-            >
-              Gateway Token{' '}
-              <span className="normal-case tracking-normal text-red-400">*</span>
+            <label htmlFor="auth-token" className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-gray-400">
+              Gateway Token <span className="text-red-500">*</span>
             </label>
             <input
               id="auth-token"
               type="password"
               value={authToken}
-              onChange={(e) => {
-                setAuthToken(e.target.value)
-                setError(null)
-              }}
-              placeholder="Gateway auth token"
+              onChange={(e) => { setAuthToken(e.target.value); setError(null) }}
+              placeholder="••••••••"
               spellCheck={false}
               autoComplete="off"
-              className="w-full rounded-lg border border-zinc-700 bg-[#09090b] px-3 py-2.5 font-mono text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
+              className="w-full rounded-md border border-zinc-800 bg-[#0a0a0c] px-3 py-2.5 font-mono text-sm text-gray-200 placeholder-zinc-700 outline-none transition-colors focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50"
             />
           </div>
 
-          {/* Step mode toggle */}
-          <div className="mb-6 flex items-center justify-between rounded-lg border border-zinc-700 bg-[#09090b] px-3 py-2.5">
+          {/* Step Mode Toggle */}
+          <div className="mb-8 flex items-center justify-between rounded-md border border-zinc-800/80 bg-[#0a0a0c] px-3 py-2.5">
             <div>
-              <div className="text-sm font-medium text-zinc-300">Step Mode</div>
-              <div className="text-xs text-zinc-500">Pause before each test, advance manually</div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-gray-300">Step Mode</div>
+              <div className="mt-0.5 text-[10px] text-zinc-500">Pause before each test, advance manually</div>
             </div>
             <button
               type="button"
               onClick={() => setStepMode(!stepMode)}
-              className={`relative h-6 w-11 rounded-full transition-colors ${
-                stepMode ? 'bg-emerald-600' : 'bg-zinc-600'
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:ring-offset-2 focus:ring-offset-[#121214] ${
+                stepMode ? 'border-cyan-500/50 bg-cyan-500/20' : 'border-zinc-700 bg-zinc-800'
               }`}
+              role="switch"
+              aria-checked={stepMode}
             >
+              <span className="sr-only">Toggle Step Mode</span>
               <span
-                className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-                  stepMode ? 'translate-x-5' : 'translate-x-0'
+                className={`pointer-events-none inline-block h-3 w-3 transform rounded-full shadow transition duration-200 ease-in-out ${
+                  stepMode ? 'translate-x-4 bg-cyan-400' : 'translate-x-1 bg-zinc-400'
                 }`}
               />
             </button>
@@ -253,7 +267,7 @@ export default function ConnectForm({ onStartScan }: ConnectFormProps): JSX.Elem
 
           {/* Error message */}
           {error && (
-            <div className="mb-4 rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-2 text-sm text-red-400">
+            <div className="mb-5 rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-[11px] text-red-400">
               {error}
             </div>
           )}
@@ -262,22 +276,26 @@ export default function ConnectForm({ onStartScan }: ConnectFormProps): JSX.Elem
           <button
             type="submit"
             disabled={!canSubmit}
-            className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+            className="w-full rounded-md bg-zinc-100 px-4 py-2.5 text-sm font-semibold text-zinc-900 transition-opacity hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {submitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                Connecting...
-              </span>
-            ) : (
-              'Initiate Scan'
-            )}
+            {submitting ? 'Connecting...' : 'Initiate Scan'}
           </button>
 
-          {/* Disclaimer */}
-          <p className="mt-4 text-center text-xs leading-relaxed text-zinc-600">
-            Authorized systems only. Ensure you have permission to test this target.
-          </p>
+          {/* Disclaimer & Privacy Note */}
+          <div className="mt-6 flex flex-col gap-3 border-t border-zinc-800/50 pt-5">
+            <div className="flex items-start gap-2">
+              <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-zinc-500" />
+              <p className="text-[11px] leading-relaxed text-zinc-500">
+                <strong className="font-medium text-zinc-400">Privacy First:</strong> Scans private agents locally. No public exposure or external telemetry required.
+              </p>
+            </div>
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500/70" />
+              <p className="text-[11px] leading-relaxed text-zinc-500">
+                Authorized systems only. Ensure you have permission to test this target.
+              </p>
+            </div>
+          </div>
         </form>
       </div>
     </div>

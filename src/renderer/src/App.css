@@ -1,22 +1,23 @@
 @import "tailwindcss";
+@source "../../shared/";
 
 /* Custom scrollbar for dark theme */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #09090b;
+  background: #0a0a0c;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: #27272a;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
+  background: #3f3f46;
 }
 
 /* Phase badge pulse animation */
@@ -25,7 +26,7 @@
     opacity: 1;
   }
   50% {
-    opacity: 0.6;
+    opacity: 0.5;
   }
 }
 
@@ -37,7 +38,7 @@
 @keyframes feed-fade-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -46,7 +47,7 @@
 }
 
 .animate-feed-in {
-  animation: feed-fade-in 0.3s ease-out;
+  animation: feed-fade-in 0.25s ease-out;
 }
 
 /* Score circle stroke animation */
@@ -91,10 +92,10 @@
 /* Category card border glow for running state */
 @keyframes border-glow {
   0%, 100% {
-    border-color: #3b82f6;
+    border-color: #22d3ee;
   }
   50% {
-    border-color: #60a5fa;
+    border-color: #06b6d4;
   }
 }
 

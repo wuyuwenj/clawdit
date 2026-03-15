@@ -6,11 +6,11 @@ interface LiveLogProps {
 }
 
 const LEVEL_COLORS: Record<LogEntry['level'], string> = {
-  info: 'text-zinc-500',
-  warn: 'text-yellow-400',
+  info: 'text-gray-500',
+  warn: 'text-amber-400',
   error: 'text-red-400',
-  attack: 'text-blue-400',
-  result: 'text-emerald-400'
+  attack: 'text-cyan-400',
+  result: 'text-teal-400'
 }
 
 function formatTimestamp(ts: number): string {
@@ -31,13 +31,13 @@ export default function LiveLog({ entries }: LiveLogProps): JSX.Element {
   }, [entries.length])
 
   return (
-    <div className="flex h-full flex-col rounded-lg border border-zinc-800 bg-[#09090b]">
+    <div className="flex h-full flex-col rounded-md border border-[#27272a] bg-[#0a0a0c]">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-800 px-3 py-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+      <div className="flex items-center justify-between border-b border-[#27272a] px-3 py-2">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
           Log
         </span>
-        <span className="text-xs tabular-nums text-zinc-600">
+        <span className="text-[10px] tabular-nums text-gray-600">
           {entries.length} line{entries.length !== 1 ? 's' : ''}
         </span>
       </div>
@@ -45,16 +45,16 @@ export default function LiveLog({ entries }: LiveLogProps): JSX.Element {
       {/* Log body */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-2 font-mono text-xs leading-5 select-text"
+        className="flex-1 overflow-y-auto p-2 font-mono text-[10px] leading-5 select-text"
       >
         {entries.length === 0 && (
           <div className="flex h-full items-center justify-center">
-            <span className="text-zinc-700">No log entries yet</span>
+            <span className="text-gray-700">No log entries yet</span>
           </div>
         )}
         {entries.map((entry, idx) => (
           <div key={idx} className="flex gap-2">
-            <span className="shrink-0 text-zinc-700 tabular-nums">
+            <span className="shrink-0 text-gray-700 tabular-nums">
               {formatTimestamp(entry.timestamp)}
             </span>
             <span className={LEVEL_COLORS[entry.level]}>
