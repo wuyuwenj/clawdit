@@ -1,0 +1,131 @@
+:root {
+  --landing-bg: #071019;
+  --landing-panel: rgba(11, 15, 24, 0.78);
+  --landing-panel-border: rgba(148, 163, 184, 0.14);
+  --landing-copy: #dbe4f0;
+  --landing-muted: #8da0b5;
+  --landing-accent: #67e8f9;
+  --landing-accent-soft: rgba(103, 232, 249, 0.14);
+  --landing-shadow: 0 28px 80px rgba(2, 6, 23, 0.55);
+}
+
+.dashboard-showcase {
+  position: relative;
+  overflow: hidden;
+  border-radius: 32px;
+  border: 1px solid var(--landing-panel-border);
+  background:
+    radial-gradient(circle at top left, rgba(34, 211, 238, 0.2), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.18), transparent 28%),
+    linear-gradient(145deg, rgba(6, 12, 21, 0.98), rgba(4, 8, 16, 0.9));
+  box-shadow: var(--landing-shadow);
+}
+
+.dashboard-showcase::before {
+  content: "";
+  position: absolute;
+  inset: 14px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  pointer-events: none;
+}
+
+.dashboard-showcase__inner {
+  position: relative;
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.dashboard-showcase__badge {
+  position: absolute;
+  top: 1.25rem;
+  left: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(103, 232, 249, 0.22);
+  background: rgba(6, 10, 18, 0.82);
+  color: var(--landing-copy);
+  font: 600 0.72rem/1 "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  backdrop-filter: blur(18px);
+}
+
+.dashboard-showcase__badge::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--landing-accent);
+  box-shadow: 0 0 20px rgba(103, 232, 249, 0.65);
+}
+
+.dashboard-showcase__frame {
+  position: relative;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.9);
+  background: linear-gradient(180deg, rgba(8, 12, 18, 0.92), rgba(4, 7, 12, 0.94));
+}
+
+.dashboard-showcase__frame img,
+.dashboard-showcase__frame svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.dashboard-showcase__meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.dashboard-showcase__stat {
+  padding: 0.9rem 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background: var(--landing-panel);
+  backdrop-filter: blur(14px);
+}
+
+.dashboard-showcase__label {
+  margin: 0 0 0.35rem;
+  color: var(--landing-muted);
+  font: 600 0.72rem/1 "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.dashboard-showcase__value {
+  margin: 0;
+  color: var(--landing-copy);
+  font: 600 clamp(1rem, 1.8vw, 1.25rem)/1.2 "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+}
+
+.dashboard-showcase__value strong {
+  color: var(--landing-accent);
+}
+
+@media (max-width: 900px) {
+  .dashboard-showcase {
+    border-radius: 24px;
+  }
+
+  .dashboard-showcase__inner {
+    padding: 0.9rem;
+  }
+
+  .dashboard-showcase__badge {
+    position: static;
+    margin-bottom: 0.9rem;
+    width: max-content;
+  }
+
+  .dashboard-showcase__meta {
+    grid-template-columns: 1fr;
+  }
+}
