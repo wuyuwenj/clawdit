@@ -1,4 +1,4 @@
-import { useReducer, useEffect, useRef, useCallback } from 'react'
+import { useReducer, useEffect, useRef, useCallback, useState } from 'react'
 import {
   ScanState,
   ScanStatus,
@@ -174,8 +174,11 @@ function scanReducer(state: ScanState, action: Action): ScanState {
 
 // ── App component ──────────────────────────────────────────────
 
+type View = 'auto' | 'dashboard' | 'findings'
+
 export default function App(): JSX.Element {
   const [state, dispatch] = useReducer(scanReducer, undefined, createInitialState)
+  const [view, setView] = useState<View>('auto')
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Elapsed time timer
@@ -209,7 +212,7 @@ export default function App(): JSX.Element {
   }, [])
 
   const handleStartScan = useCallback(
-    async (config: { targetUrl: string; authToken?: string }) => {
+    async (config: { targetUrl: string; authToken: string }) => {
       dispatch({ type: 'START_SCAN', targetUrl: config.targetUrl })
       await window.shellclaw.startScan(config)
     },
@@ -236,10 +239,13 @@ export default function App(): JSX.Element {
 declare global {
   interface Window {
     shellclaw: {
-      startScan: (config: { targetUrl: string; authToken?: string }) => Promise<void>
+      startScan: (config: { targetUrl: string; authToken: string }) => Promise<void>
       onScanEvent: (callback: (event: ScanEvent) => void) => void
       removeAllScanListeners: () => void
       getStatus: () => Promise<ScanState | null>
+      readOpenClawConfig: () => Promise<{
+        gateway?: { port?: number; auth?: { token?: string } }
+      } | null>
     }
   }
 }

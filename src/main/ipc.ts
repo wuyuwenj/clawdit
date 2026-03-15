@@ -1,4 +1,7 @@
 import { ipcMain, BrowserWindow } from 'electron'
+import { readFile } from 'fs/promises'
+import { join } from 'path'
+import { homedir } from 'os'
 import { ScanConfig, ScanState, ScanEvent } from '@shared/types'
 import { runScan } from './lib/scanner'
 
@@ -47,5 +50,15 @@ export function registerIpcHandlers(mainWindow: BrowserWindow): void {
 
   ipcMain.handle('scan:status', async () => {
     return currentScanState
+  })
+
+  ipcMain.handle('read-openclaw-config', async () => {
+    try {
+      const configPath = join(homedir(), '.openclaw', 'openclaw.json')
+      const raw = await readFile(configPath, 'utf-8')
+      return JSON.parse(raw)
+    } catch {
+      return null
+    }
   })
 }

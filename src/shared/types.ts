@@ -22,7 +22,7 @@ export enum ScanStatus {
 
 export interface ScanConfig {
   targetUrl: string
-  authToken?: string
+  authToken: string
 }
 
 export interface Attack {
