@@ -303,6 +303,13 @@ declare global {
       readOpenClawConfig: () => Promise<{
         gateway?: { port?: number; auth?: { token?: string } }
       } | null>
+      getPreloadedGateway: () => Promise<{
+        success: boolean
+        config?: { url: string; token: string }
+        error?: string
+        errorType?: 'no_config' | 'no_token' | 'gateway_down' | 'auth_failed' | 'auto_fix_failed'
+        autoFixed?: boolean
+      } | null>
     }
   }
 }

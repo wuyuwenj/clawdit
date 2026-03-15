@@ -7,7 +7,21 @@ export interface OpenClawConfig {
     auth?: {
       token?: string
     }
+    http?: {
+      endpoints?: {
+        chatCompletions?: { enabled?: boolean }
+        responses?: { enabled?: boolean }
+      }
+    }
   }
+}
+
+export interface GatewaySetupResult {
+  success: boolean
+  config?: { url: string; token: string }
+  error?: string
+  errorType?: 'no_config' | 'no_token' | 'gateway_down' | 'auth_failed' | 'auto_fix_failed'
+  autoFixed?: boolean
 }
 
 export interface ShellClawAPI {
@@ -19,6 +33,7 @@ export interface ShellClawAPI {
   removeAllScanListeners: () => void
   getStatus: () => Promise<ScanState | null>
   readOpenClawConfig: () => Promise<OpenClawConfig | null>
+  getPreloadedGateway: () => Promise<GatewaySetupResult | null>
 }
 
 contextBridge.exposeInMainWorld('shellclaw', {
@@ -33,5 +48,6 @@ contextBridge.exposeInMainWorld('shellclaw', {
     ipcRenderer.removeAllListeners('scan:event')
   },
   getStatus: () => ipcRenderer.invoke('scan:status'),
-  readOpenClawConfig: () => ipcRenderer.invoke('read-openclaw-config')
+  readOpenClawConfig: () => ipcRenderer.invoke('read-openclaw-config'),
+  getPreloadedGateway: () => ipcRenderer.invoke('get-preloaded-gateway')
 } satisfies ShellClawAPI)
