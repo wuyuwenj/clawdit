@@ -1,11 +1,16 @@
 import { useMemo } from 'react'
-import { ScanState, ScanPhase } from '@shared/types'
+import { ScanState, ScanPhase, ScanStatus, Attack } from '@shared/types'
 import CategoryCard from './CategoryCard'
 import AttackFeed from './AttackFeed'
 import LiveLog from './LiveLog'
 
 interface ScanDashboardProps {
   state: ScanState
+  paused?: boolean
+  nextAttack?: Attack | null
+  onPause?: () => void
+  onStop?: () => void
+  onNext?: () => void
   onViewFindings?: () => void
 }
 
@@ -34,7 +39,8 @@ function getScoreColor(score: number): string {
   return 'text-red-400'
 }
 
-export default function ScanDashboard({ state, onViewFindings }: ScanDashboardProps): JSX.Element {
+export default function ScanDashboard({ state, paused, nextAttack, onPause, onStop, onNext, onViewFindings }: ScanDashboardProps): JSX.Element {
+  const isRunning = state.status === ScanStatus.RUNNING
   const allResults = useMemo(
     () => state.categories.flatMap((c) => c.results).sort((a, b) => a.timestamp - b.timestamp),
     [state.categories]
@@ -112,6 +118,43 @@ export default function ScanDashboard({ state, onViewFindings }: ScanDashboardPr
           </span>
         </div>
 
+        {/* Pause/Resume button (shown while scanning) */}
+        {isRunning && onPause && (
+          <>
+            <div className="h-4 w-px bg-zinc-700" />
+            <button
+              onClick={onPause}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-medium ${
+                paused
+                  ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25'
+                  : 'border-yellow-500/30 bg-yellow-500/15 text-yellow-400 hover:bg-yellow-500/25'
+              }`}
+            >
+              {paused ? 'Resume' : 'Pause'}
+            </button>
+          </>
+        )}
+
+        {/* Stop button (shown while scanning) */}
+        {isRunning && onStop && (
+          <button
+            onClick={onStop}
+            className="rounded-lg border border-red-500/30 bg-red-500/15 px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/25"
+          >
+            Stop
+          </button>
+        )}
+
+        {/* Next button (shown when paused in step mode) */}
+        {paused && onNext && nextAttack && (
+          <button
+            onClick={onNext}
+            className="rounded-lg border border-blue-500/30 bg-blue-500/15 px-3 py-1.5 text-xs font-medium text-blue-400 hover:bg-blue-500/25 animate-phase-pulse"
+          >
+            Run Next
+          </button>
+        )}
+
         {/* View Results button (shown when scan is complete) */}
         {onViewFindings && (
           <>
@@ -125,6 +168,34 @@ export default function ScanDashboard({ state, onViewFindings }: ScanDashboardPr
           </>
         )}
       </div>
+
+      {/* ── Paused banner ──────────────────────────── */}
+      {paused && isRunning && (
+        <div className="flex items-center gap-3 border-b border-yellow-500/20 bg-yellow-500/5 px-4 py-2">
+          <span className="rounded-full border border-yellow-500/30 bg-yellow-500/20 px-2 py-0.5 text-[10px] font-bold text-yellow-400">
+            PAUSED
+          </span>
+          {nextAttack ? (
+            <>
+              <span className="text-xs text-zinc-400">
+                Next: <span className="font-medium text-zinc-200">{nextAttack.name}</span>
+              </span>
+              {onNext && (
+                <button
+                  onClick={onNext}
+                  className="ml-auto rounded-lg border border-blue-500/30 bg-blue-500/15 px-4 py-1.5 text-xs font-medium text-blue-400 hover:bg-blue-500/25"
+                >
+                  Run This Test
+                </button>
+              )}
+            </>
+          ) : (
+            <span className="text-xs text-zinc-400">
+              Scan paused. Click <span className="font-medium text-emerald-400">Resume</span> to continue.
+            </span>
+          )}
+        </div>
+      )}
 
       {/* ── Main content area ───────────────────────── */}
       <div className="flex min-h-0 flex-1">

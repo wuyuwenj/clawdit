@@ -3,10 +3,18 @@ import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { homedir } from 'os'
 import { ScanConfig, ScanState, ScanEvent } from '@shared/types'
-import { runScan } from './lib/scanner'
+import { runScan, ScanControls } from './lib/scanner'
 
 let currentScanState: ScanState | null = null
 let isScanning = false
+let abortController: AbortController | null = null
+let stepResolver: (() => void) | null = null
+
+// Pause state: when paused, pausePromise is a pending promise that workers await.
+// Calling resume resolves it. Calling pause again creates a new pending promise.
+let isPaused = false
+let pauseResolver: (() => void) | null = null
+let pausePromise: Promise<void> | null = null
 
 export function registerIpcHandlers(mainWindow: BrowserWindow): void {
   ipcMain.handle('scan:start', async (_event, config: ScanConfig) => {
@@ -16,36 +24,131 @@ export function registerIpcHandlers(mainWindow: BrowserWindow): void {
 
     isScanning = true
     currentScanState = null
+    abortController = new AbortController()
+    stepResolver = null
+    isPaused = false
+    pauseResolver = null
+    pausePromise = null
+
+    const controls: ScanControls = {
+      abort: abortController.signal,
+      waitForStep: () =>
+        new Promise<void>((resolve) => {
+          stepResolver = resolve
+        }),
+      checkPause: async () => {
+        // If paused, block until resume
+        if (pausePromise) {
+          await pausePromise
+        }
+      }
+    }
 
     const emit = (event: ScanEvent): void => {
-      // Forward every scan event to renderer
       if (!mainWindow.isDestroyed()) {
         mainWindow.webContents.send('scan:event', event)
       }
 
-      // Keep track of final state
       if (event.type === 'complete') {
         currentScanState = event.state
         isScanning = false
+        abortController = null
+        stepResolver = null
+        isPaused = false
+        pauseResolver = null
+        pausePromise = null
       }
       if (event.type === 'error') {
         isScanning = false
+        abortController = null
+        stepResolver = null
+        isPaused = false
+        pauseResolver = null
+        pausePromise = null
       }
     }
 
-    // Run scan in background (don't await in IPC handler — events stream via send)
-    runScan(config, emit)
+    runScan(config, emit, controls)
       .then((state) => {
         currentScanState = state
         isScanning = false
+        abortController = null
+        stepResolver = null
+        isPaused = false
+        pauseResolver = null
+        pausePromise = null
       })
       .catch((err: unknown) => {
         const message = err instanceof Error ? err.message : 'Unknown error'
         emit({ type: 'error', message })
         isScanning = false
+        abortController = null
+        stepResolver = null
+        isPaused = false
+        pauseResolver = null
+        pausePromise = null
       })
 
     return { ok: true }
+  })
+
+  ipcMain.handle('scan:pause', async () => {
+    if (!isScanning) return { error: 'No scan in progress' }
+
+    if (!isPaused) {
+      // Pause: create a pending promise that workers will await
+      isPaused = true
+      pausePromise = new Promise<void>((resolve) => {
+        pauseResolver = resolve
+      })
+      // Notify renderer
+      if (!mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('scan:event', { type: 'paused-toggle', paused: true })
+      }
+      return { ok: true, paused: true }
+    } else {
+      // Resume: resolve the pending promise so workers continue
+      isPaused = false
+      if (pauseResolver) {
+        pauseResolver()
+        pauseResolver = null
+      }
+      pausePromise = null
+      // Notify renderer
+      if (!mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('scan:event', { type: 'paused-toggle', paused: false })
+      }
+      return { ok: true, paused: false }
+    }
+  })
+
+  ipcMain.handle('scan:stop', async () => {
+    if (abortController) {
+      // If paused, resume first so workers can exit
+      if (isPaused && pauseResolver) {
+        pauseResolver()
+        pauseResolver = null
+        pausePromise = null
+        isPaused = false
+      }
+      abortController.abort()
+      // Also resolve any pending step wait so the scanner can exit
+      if (stepResolver) {
+        stepResolver()
+        stepResolver = null
+      }
+      return { ok: true }
+    }
+    return { error: 'No scan in progress' }
+  })
+
+  ipcMain.handle('scan:next', async () => {
+    if (stepResolver) {
+      stepResolver()
+      stepResolver = null
+      return { ok: true }
+    }
+    return { error: 'Not waiting for step' }
   })
 
   ipcMain.handle('scan:status', async () => {

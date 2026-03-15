@@ -8,7 +8,8 @@ const CATEGORY_ICONS: Record<AttackCategory, string> = {
   [AttackCategory.PROMPT_INJECTION]: '\u{1F6E1}',
   [AttackCategory.DATA_LEAKAGE]: '\u{1F441}',
   [AttackCategory.UNAUTHORIZED_ACTIONS]: '\u{26A1}',
-  [AttackCategory.ACCESS_CONTROL]: '\u{1F512}'
+  [AttackCategory.ACCESS_CONTROL]: '\u{1F512}',
+  [AttackCategory.INDIRECT_INJECTION]: '\u{1F4E8}'
 }
 
 function getScoreColor(score: number): string {
@@ -19,6 +20,7 @@ function getScoreColor(score: number): string {
 
 function getBorderClass(status: CategoryResult['status'], score: number): string {
   if (status === 'pending') return 'border-zinc-800'
+  if (status === 'skipped') return 'border-zinc-800'
   if (status === 'running') return 'border-blue-500 animate-border-glow'
   if (score > 80) return 'border-emerald-500/50'
   if (score >= 50) return 'border-yellow-500/50'
@@ -28,6 +30,9 @@ function getBorderClass(status: CategoryResult['status'], score: number): string
 function getStatusDot(status: CategoryResult['status'], score: number): JSX.Element {
   if (status === 'pending') {
     return <span className="inline-block h-2 w-2 rounded-full bg-zinc-600" />
+  }
+  if (status === 'skipped') {
+    return <span className="inline-block h-2 w-2 rounded-full bg-zinc-500" />
   }
   if (status === 'running') {
     return <span className="inline-block h-2 w-2 rounded-full bg-blue-500 animate-phase-pulse" />
@@ -77,6 +82,9 @@ export default function CategoryCard({ category }: CategoryCardProps): JSX.Eleme
         )}
         {status === 'running' && (
           <span className="text-xs text-blue-400">Running</span>
+        )}
+        {status === 'skipped' && (
+          <span className="text-xs text-zinc-500">Skipped</span>
         )}
         {status === 'pending' && (
           <span className="text-xs text-zinc-600">Pending</span>

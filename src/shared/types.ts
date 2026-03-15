@@ -2,7 +2,8 @@ export enum AttackCategory {
   PROMPT_INJECTION = 'PROMPT_INJECTION',
   DATA_LEAKAGE = 'DATA_LEAKAGE',
   UNAUTHORIZED_ACTIONS = 'UNAUTHORIZED_ACTIONS',
-  ACCESS_CONTROL = 'ACCESS_CONTROL'
+  ACCESS_CONTROL = 'ACCESS_CONTROL',
+  INDIRECT_INJECTION = 'INDIRECT_INJECTION'
 }
 
 export enum ScanPhase {
@@ -16,6 +17,7 @@ export enum ScanPhase {
 export enum ScanStatus {
   IDLE = 'IDLE',
   RUNNING = 'RUNNING',
+  PAUSED = 'PAUSED',
   COMPLETE = 'COMPLETE',
   ERROR = 'ERROR'
 }
@@ -23,6 +25,21 @@ export enum ScanStatus {
 export interface ScanConfig {
   targetUrl: string
   authToken: string
+  stepMode?: boolean
+}
+
+export interface MultiTurnStep {
+  label: string
+  prompt: string
+  type?: 'chat' | 'cli'  // 'chat' = send to OpenClaw, 'cli' = execute locally
+  delayAfterMs?: number
+}
+
+export interface TurnLogEntry {
+  label: string
+  prompt: string
+  response: string
+  durationMs: number
 }
 
 export interface Attack {
@@ -31,6 +48,7 @@ export interface Attack {
   name: string
   prompt: string
   isTemplate: boolean
+  multiTurn?: { turns: MultiTurnStep[] }
 }
 
 export interface AttackResult {
@@ -48,14 +66,16 @@ export interface AttackResult {
   attackPrompt: string
   attackName: string
   timestamp: number
+  turnLog?: TurnLogEntry[]
 }
 
 export interface CategoryResult {
   category: AttackCategory
-  status: 'pending' | 'running' | 'complete'
+  status: 'pending' | 'running' | 'complete' | 'skipped'
   score: number
   attacks: Attack[]
   results: AttackResult[]
+  skipReason?: string
 }
 
 export interface LogEntry {
@@ -76,6 +96,7 @@ export interface ScanState {
   topFindings: AttackResult[]
   reconSummary: string
   log: LogEntry[]
+  discoveredEmail?: string
 }
 
 export type ScanEvent =
@@ -86,17 +107,22 @@ export type ScanEvent =
   | { type: 'category-update'; category: CategoryResult }
   | { type: 'complete'; state: ScanState }
   | { type: 'error'; message: string }
+  | { type: 'paused'; nextAttack: Attack }
+  | { type: 'paused-toggle'; paused: boolean }
+  | { type: 'stopped' }
 
 export const CATEGORY_LABELS: Record<AttackCategory, string> = {
   [AttackCategory.PROMPT_INJECTION]: 'Prompt Injection',
   [AttackCategory.DATA_LEAKAGE]: 'Data Leakage',
   [AttackCategory.UNAUTHORIZED_ACTIONS]: 'Unauthorized Actions',
-  [AttackCategory.ACCESS_CONTROL]: 'Access Control'
+  [AttackCategory.ACCESS_CONTROL]: 'Access Control',
+  [AttackCategory.INDIRECT_INJECTION]: 'Indirect Injection'
 }
 
 export const CATEGORY_WEIGHTS: Record<AttackCategory, number> = {
-  [AttackCategory.PROMPT_INJECTION]: 0.3,
-  [AttackCategory.DATA_LEAKAGE]: 0.3,
-  [AttackCategory.UNAUTHORIZED_ACTIONS]: 0.25,
-  [AttackCategory.ACCESS_CONTROL]: 0.15
+  [AttackCategory.PROMPT_INJECTION]: 0.25,
+  [AttackCategory.DATA_LEAKAGE]: 0.25,
+  [AttackCategory.UNAUTHORIZED_ACTIONS]: 0.20,
+  [AttackCategory.ACCESS_CONTROL]: 0.10,
+  [AttackCategory.INDIRECT_INJECTION]: 0.20
 }

@@ -113,25 +113,52 @@ function FindingCard({ result }: FindingCardProps): JSX.Element {
             <span>Confidence: {result.confidence}</span>
           </div>
 
-          {/* Attack prompt */}
-          <div className="mb-3">
-            <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-              Attack Prompt
+          {/* Multi-turn log (if present) */}
+          {result.turnLog && result.turnLog.length > 0 ? (
+            <div className="mb-3">
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                Multi-Turn Sequence
+              </div>
+              {result.turnLog.map((turn, idx) => (
+                <div key={idx} className="mb-2 rounded-md bg-[#09090b] p-3">
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="text-xs font-medium text-teal-400">
+                      Turn {idx + 1}: {turn.label}
+                    </span>
+                    <span className="text-xs text-zinc-600">{turn.durationMs}ms</span>
+                  </div>
+                  <pre className="mb-1 font-mono text-xs leading-5 text-zinc-400 whitespace-pre-wrap">
+                    {turn.prompt}
+                  </pre>
+                  <pre className="font-mono text-xs leading-5 text-zinc-500 whitespace-pre-wrap">
+                    {turn.response}
+                  </pre>
+                </div>
+              ))}
             </div>
-            <pre className="max-h-40 overflow-auto rounded-md bg-[#09090b] p-3 font-mono text-xs leading-5 text-zinc-400">
-              {result.attackPrompt}
-            </pre>
-          </div>
+          ) : (
+            <>
+              {/* Attack prompt */}
+              <div className="mb-3">
+                <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                  Attack Prompt
+                </div>
+                <pre className="max-h-40 overflow-auto rounded-md bg-[#09090b] p-3 font-mono text-xs leading-5 text-zinc-400">
+                  {result.attackPrompt}
+                </pre>
+              </div>
 
-          {/* Raw response */}
-          <div className="mb-3">
-            <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-              Raw Response
-            </div>
-            <pre className="max-h-40 overflow-auto rounded-md bg-[#09090b] p-3 font-mono text-xs leading-5 text-zinc-400">
-              {result.rawResponse}
-            </pre>
-          </div>
+              {/* Raw response */}
+              <div className="mb-3">
+                <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                  Raw Response
+                </div>
+                <pre className="max-h-40 overflow-auto rounded-md bg-[#09090b] p-3 font-mono text-xs leading-5 text-zinc-400">
+                  {result.rawResponse}
+                </pre>
+              </div>
+            </>
+          )}
 
           {/* Evidence */}
           {result.evidence && (
@@ -220,14 +247,27 @@ export default function FindingsPanel({ state, onReset, onViewLogs }: FindingsPa
             Category Breakdown
           </h3>
           <div className="space-y-3">
-            {state.categories.map((cat) => (
-              <CategoryBar
-                key={cat.category}
-                label={CATEGORY_LABELS[cat.category]}
-                score={cat.score}
-                weight={CATEGORY_WEIGHTS[cat.category]}
-              />
-            ))}
+            {state.categories.map((cat) =>
+              cat.status === 'skipped' ? (
+                <div key={cat.category} className="flex items-center gap-3">
+                  <div className="w-44 shrink-0">
+                    <div className="text-sm font-medium text-zinc-500">{CATEGORY_LABELS[cat.category]}</div>
+                    <div className="text-xs text-zinc-600">Skipped{cat.skipReason ? ` — ${cat.skipReason}` : ''}</div>
+                  </div>
+                  <div className="flex-1">
+                    <div className="h-3 w-full overflow-hidden rounded-full bg-zinc-800" />
+                  </div>
+                  <span className="w-10 text-right text-sm text-zinc-600">—</span>
+                </div>
+              ) : (
+                <CategoryBar
+                  key={cat.category}
+                  label={CATEGORY_LABELS[cat.category]}
+                  score={cat.score}
+                  weight={CATEGORY_WEIGHTS[cat.category]}
+                />
+              )
+            )}
           </div>
         </div>
 

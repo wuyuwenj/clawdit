@@ -4,6 +4,7 @@ import {
   ScanStatus,
   ScanPhase,
   ScanEvent,
+  Attack,
   AttackCategory,
   CategoryResult
 } from '@shared/types'
@@ -31,7 +32,8 @@ function createInitialState(): ScanState {
       createEmptyCategory(AttackCategory.PROMPT_INJECTION),
       createEmptyCategory(AttackCategory.DATA_LEAKAGE),
       createEmptyCategory(AttackCategory.UNAUTHORIZED_ACTIONS),
-      createEmptyCategory(AttackCategory.ACCESS_CONTROL)
+      createEmptyCategory(AttackCategory.ACCESS_CONTROL),
+      createEmptyCategory(AttackCategory.INDIRECT_INJECTION)
     ],
     overallScore: 100,
     topFindings: [],
@@ -179,6 +181,8 @@ type View = 'auto' | 'dashboard' | 'findings'
 export default function App(): JSX.Element {
   const [state, dispatch] = useReducer(scanReducer, undefined, createInitialState)
   const [view, setView] = useState<View>('auto')
+  const [paused, setPaused] = useState(false)
+  const [nextAttack, setNextAttack] = useState<Attack | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Elapsed time timer
@@ -205,6 +209,20 @@ export default function App(): JSX.Element {
   useEffect(() => {
     window.shellclaw.onScanEvent((event: ScanEvent) => {
       dispatch({ type: 'SCAN_EVENT', event })
+      if (event.type === 'paused') {
+        // Step mode pause (waiting for next click)
+        setPaused(true)
+        setNextAttack(event.nextAttack)
+      } else if (event.type === 'paused-toggle') {
+        // Manual pause/resume toggle
+        setPaused(event.paused)
+        if (!event.paused) setNextAttack(null)
+      } else if (event.type === 'attack-start') {
+        setNextAttack(null)
+      } else if (event.type === 'stopped' || event.type === 'complete') {
+        setPaused(false)
+        setNextAttack(null)
+      }
     })
     return () => {
       window.shellclaw.removeAllScanListeners()
@@ -212,15 +230,31 @@ export default function App(): JSX.Element {
   }, [])
 
   const handleStartScan = useCallback(
-    async (config: { targetUrl: string; authToken: string }) => {
+    async (config: { targetUrl: string; authToken: string; stepMode?: boolean }) => {
       dispatch({ type: 'START_SCAN', targetUrl: config.targetUrl })
+      setPaused(false)
+      setNextAttack(null)
       await window.shellclaw.startScan(config)
     },
     []
   )
 
+  const handlePause = useCallback(async () => {
+    await window.shellclaw.pauseScan()
+  }, [])
+
+  const handleStop = useCallback(async () => {
+    await window.shellclaw.stopScan()
+  }, [])
+
+  const handleNext = useCallback(async () => {
+    await window.shellclaw.nextStep()
+  }, [])
+
   const handleReset = useCallback(() => {
     setView('auto')
+    setPaused(false)
+    setNextAttack(null)
     dispatch({ type: 'RESET' })
   }, [])
 
@@ -235,6 +269,11 @@ export default function App(): JSX.Element {
       {showDashboard && (
         <ScanDashboard
           state={state}
+          paused={paused}
+          nextAttack={nextAttack}
+          onPause={handlePause}
+          onStop={handleStop}
+          onNext={handleNext}
           onViewFindings={isComplete ? () => setView('findings') : undefined}
         />
       )}
@@ -254,7 +293,10 @@ export default function App(): JSX.Element {
 declare global {
   interface Window {
     shellclaw: {
-      startScan: (config: { targetUrl: string; authToken: string }) => Promise<void>
+      startScan: (config: { targetUrl: string; authToken: string; stepMode?: boolean }) => Promise<void>
+      pauseScan: () => Promise<void>
+      stopScan: () => Promise<void>
+      nextStep: () => Promise<void>
       onScanEvent: (callback: (event: ScanEvent) => void) => void
       removeAllScanListeners: () => void
       getStatus: () => Promise<ScanState | null>

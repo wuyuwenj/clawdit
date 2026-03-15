@@ -1,12 +1,13 @@
 import { useState, useCallback, useEffect, type FormEvent } from 'react'
 
 interface ConnectFormProps {
-  onStartScan: (config: { targetUrl: string; authToken: string }) => Promise<void>
+  onStartScan: (config: { targetUrl: string; authToken: string; stepMode?: boolean }) => Promise<void>
 }
 
 export default function ConnectForm({ onStartScan }: ConnectFormProps): JSX.Element {
   const [targetUrl, setTargetUrl] = useState('')
   const [authToken, setAuthToken] = useState('')
+  const [stepMode, setStepMode] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [autoDetected, setAutoDetected] = useState(false)
@@ -51,7 +52,8 @@ export default function ConnectForm({ onStartScan }: ConnectFormProps): JSX.Elem
       try {
         await onStartScan({
           targetUrl: trimmedUrl,
-          authToken: trimmedToken
+          authToken: trimmedToken,
+          stepMode
         })
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to start scan')
@@ -134,6 +136,27 @@ export default function ConnectForm({ onStartScan }: ConnectFormProps): JSX.Elem
               autoComplete="off"
               className="w-full rounded-lg border border-zinc-700 bg-[#09090b] px-3 py-2.5 font-mono text-sm text-zinc-100 placeholder-zinc-600 outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500"
             />
+          </div>
+
+          {/* Step mode toggle */}
+          <div className="mb-6 flex items-center justify-between rounded-lg border border-zinc-700 bg-[#09090b] px-3 py-2.5">
+            <div>
+              <div className="text-sm font-medium text-zinc-300">Step Mode</div>
+              <div className="text-xs text-zinc-500">Pause before each test, advance manually</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setStepMode(!stepMode)}
+              className={`relative h-6 w-11 rounded-full transition-colors ${
+                stepMode ? 'bg-emerald-600' : 'bg-zinc-600'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
+                  stepMode ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
           </div>
 
           {/* Error message */}

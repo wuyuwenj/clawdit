@@ -10,7 +10,8 @@ const CATEGORY_DOT_COLORS: Record<AttackCategory, string> = {
   [AttackCategory.PROMPT_INJECTION]: 'bg-violet-500',
   [AttackCategory.DATA_LEAKAGE]: 'bg-sky-500',
   [AttackCategory.UNAUTHORIZED_ACTIONS]: 'bg-amber-500',
-  [AttackCategory.ACCESS_CONTROL]: 'bg-rose-500'
+  [AttackCategory.ACCESS_CONTROL]: 'bg-rose-500',
+  [AttackCategory.INDIRECT_INJECTION]: 'bg-teal-500'
 }
 
 function getSeverityChip(severity: number): JSX.Element | null {
@@ -82,25 +83,52 @@ function AttackDetail({ result, onClose }: { result: AttackResult; onClose: () =
           <span>Finding: <span className="text-zinc-300">{result.findingType || 'N/A'}</span></span>
         </div>
 
-        {/* Attack prompt */}
-        <div>
-          <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Attack Prompt
+        {/* Multi-turn log (if present) */}
+        {result.turnLog && result.turnLog.length > 0 ? (
+          <div>
+            <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              Multi-Turn Sequence
+            </div>
+            {result.turnLog.map((turn, idx) => (
+              <div key={idx} className="mb-3">
+                <div className="mb-1 flex items-center gap-2">
+                  <span className="rounded-full bg-teal-500/20 border border-teal-500/30 px-2 py-0.5 text-[10px] font-medium text-teal-400">
+                    Turn {idx + 1}: {turn.label}
+                  </span>
+                  <span className="text-xs text-zinc-600">{turn.durationMs}ms</span>
+                </div>
+                <pre className="mb-1 max-h-32 overflow-auto rounded-lg border border-zinc-800 bg-[#09090b] p-3 font-mono text-xs leading-relaxed text-zinc-300 whitespace-pre-wrap">
+                  {turn.prompt}
+                </pre>
+                <pre className="max-h-32 overflow-auto rounded-lg border border-zinc-800 bg-[#09090b] p-3 font-mono text-xs leading-relaxed text-zinc-400 whitespace-pre-wrap">
+                  {turn.response}
+                </pre>
+              </div>
+            ))}
           </div>
-          <pre className="max-h-48 overflow-auto rounded-lg border border-zinc-800 bg-[#09090b] p-3 font-mono text-xs leading-relaxed text-zinc-300 whitespace-pre-wrap">
-            {result.attackPrompt}
-          </pre>
-        </div>
+        ) : (
+          <>
+            {/* Attack prompt */}
+            <div>
+              <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                Attack Prompt
+              </div>
+              <pre className="max-h-48 overflow-auto rounded-lg border border-zinc-800 bg-[#09090b] p-3 font-mono text-xs leading-relaxed text-zinc-300 whitespace-pre-wrap">
+                {result.attackPrompt}
+              </pre>
+            </div>
 
-        {/* OpenClaw response */}
-        <div>
-          <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            OpenClaw Response
-          </div>
-          <pre className="max-h-64 overflow-auto rounded-lg border border-zinc-800 bg-[#09090b] p-3 font-mono text-xs leading-relaxed text-zinc-300 whitespace-pre-wrap">
-            {result.rawResponse || '[No response]'}
-          </pre>
-        </div>
+            {/* OpenClaw response */}
+            <div>
+              <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                OpenClaw Response
+              </div>
+              <pre className="max-h-64 overflow-auto rounded-lg border border-zinc-800 bg-[#09090b] p-3 font-mono text-xs leading-relaxed text-zinc-300 whitespace-pre-wrap">
+                {result.rawResponse || '[No response]'}
+              </pre>
+            </div>
+          </>
+        )}
 
         {/* Evidence */}
         {result.evidence && (
