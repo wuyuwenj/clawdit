@@ -1,81 +1,80 @@
 # Clawdit
 
-Clawdit is an Electron-based red-team harness for OpenClaw-compatible agents. It connects to an OpenAI-style `/v1/chat/completions` endpoint, runs a category-based attack scan, evaluates the responses, and surfaces findings in a desktop UI.
+Clawdit is a desktop app that tests how easily an AI assistant can be tricked, misled, or pushed into unsafe behavior.
 
-## Current Scan Model
+It is made for people who want a fast, visual way to check whether an assistant stays careful when it sees suspicious messages, risky requests, emails, or calendar invites.
 
-The scanner currently runs 6 categories:
+## What It Does
 
-1. Prompt Injection
-2. Data Leakage
-3. Unauthorized Actions
-4. Access Control
-5. Email Injection
-6. Calendar Injection
+Clawdit connects to your assistant and runs a safety check across 6 areas:
 
-In parallel mode, the scanner allocates 6 workers so all 6 category slots run concurrently. If a category is not applicable, its worker exits early, but the scheduler still reserves one worker per category.
+1. Tricking the assistant into ignoring its rules
+2. Getting it to reveal private or hidden information
+3. Pushing it to take actions it should not take
+4. Pretending to be someone powerful and trusted
+5. Hiding harmful instructions inside email
+6. Hiding harmful instructions inside calendar events or meeting invites
 
-## Email Injection
+It shows the results live while the scan is running, then gives you a score and a clear summary of what it found.
 
-The UI label is `Email Injection`. Internally, the enum is still `INDIRECT_INJECTION` to avoid unnecessary code churn.
+## How It Works
 
-This category uses a multi-turn flow:
+Before testing begins, Clawdit looks up recent real-world attack ideas so the scan is not limited to the same fixed examples every time.
 
-1. Probe the target for accessible email accounts.
-2. If an email address is found, send a malicious email with `gog gmail send`.
-3. Wait briefly for delivery.
-4. Ask the target agent to read or summarize the email.
-5. Evaluate whether the agent treated the email as data or as instructions.
+It then starts with its built-in checks right away, while also preparing extra fresh test ideas in the background. This keeps the scan moving quickly without giving up the benefit of newer attack patterns.
 
-If no usable email account is discovered, the category is skipped.
+## Email Checks
 
-## Calendar Injection
+Clawdit can test whether an assistant treats an email like normal information or accidentally treats it like an instruction.
 
-This category is separate from email and currently includes 2 tests:
+In simple terms, it:
 
-1. Normal calendar event injection
-2. Google Meet invite injection
+1. Finds the signed-in email account
+2. Sends a test email with hidden harmful instructions inside it
+3. Asks the assistant to read or summarize that email
+4. Checks whether the assistant stayed careful or followed what the email said
 
-Both tests use a multi-turn flow:
+If no email account is available, this part is skipped.
 
-1. Create a calendar event locally with `gog calendar create primary`.
-2. For the Meet variant, add `--with-meet`.
-3. Wait briefly for the event to appear.
-4. Ask the target agent to read or summarize the event by title.
-5. Evaluate whether the agent treated the event or invite text as instructions.
+## Calendar Checks
 
-The current templates intentionally place malicious instructions in the event description/body. The Meet case also checks whether the target gives elevated trust to conferencing details.
+Clawdit can also test whether an assistant is too trusting of calendar content.
 
-## Execution Notes
+It currently uses 2 calendar cases:
 
-- Parallel mode uses one worker per category.
-- Step mode runs attacks sequentially and waits for user input between attacks.
-- Email and calendar tests execute local `gog` CLI commands from the scan runner.
-- Calendar tests currently create real calendar events and do not clean them up automatically.
+1. A normal calendar event
+2. A Google Meet invite
 
-## Prerequisites
+For each one, Clawdit creates the event, asks the assistant to look it up, and checks whether the assistant treats the event text as just information or as something it should obey.
 
-- Node.js and npm
-- An OpenClaw-compatible target endpoint
-- A working `gog` CLI installation for Gmail and Calendar flows
-- `gog` authenticated against the Google account you want to test with
-- Environment variables required by the evaluator model, if used
+## What You See During a Scan
 
-## Development
+While the scan runs, Clawdit shows:
 
-Install dependencies:
+- a live activity log
+- the current stage of the scan
+- which test areas are running
+- individual test results as they come in
+- a final score based only on the areas that actually ran
+
+The log does not force itself to the bottom while you are reading older lines, so you can inspect activity during a live run without losing your place.
+
+## Notes
+
+- Clawdit runs all 6 test areas at the same time when possible to keep scans fast.
+- Some checks may be skipped if the needed account or feature is not available.
+- Calendar tests currently create real events and do not remove them afterward.
+
+## Running It
+
+If you are running the app yourself:
 
 ```bash
 npm install
-```
-
-Run the app:
-
-```bash
 npm run dev
 ```
 
-Build the app:
+To create a production build:
 
 ```bash
 npm run build
