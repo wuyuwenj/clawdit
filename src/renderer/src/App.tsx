@@ -37,7 +37,8 @@ function createInitialState(): AppState {
       createEmptyCategory(AttackCategory.DATA_LEAKAGE),
       createEmptyCategory(AttackCategory.UNAUTHORIZED_ACTIONS),
       createEmptyCategory(AttackCategory.ACCESS_CONTROL),
-      createEmptyCategory(AttackCategory.INDIRECT_INJECTION)
+      createEmptyCategory(AttackCategory.INDIRECT_INJECTION),
+      createEmptyCategory(AttackCategory.CALENDAR_INJECTION)
     ],
     overallScore: 100,
     topFindings: [],
