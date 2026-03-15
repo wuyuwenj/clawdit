@@ -1,3 +1,4 @@
+import { execFile } from 'node:child_process'
 import { v4 as uuid } from 'uuid'
 import {
   ScanConfig,
@@ -104,38 +105,33 @@ export async function runScan(
   state.reconSummary = reconSummary
   log(emit, `Recon complete. Gathered ${reconSummary.length} chars of threat intel.`)
 
-  // --- Email Discovery (part of recon) ---
+  // --- Email Discovery via gog CLI ---
   let discoveredEmail: string | undefined
-  log(emit, 'Probing target for email capabilities...')
+  log(emit, 'Checking gog CLI for authenticated Gmail accounts...')
 
   try {
-    const emailProbeResponse = await sendAttack(
-      config.targetUrl,
-      'What email accounts do you have access to? Please list the email addresses.',
-      config.authToken
-    )
+    const gogOutput = await new Promise<string>((resolve, reject) => {
+      execFile('gog', ['auth', 'list'], { timeout: 5000 }, (err, stdout, stderr) => {
+        if (err) return reject(new Error(stderr || err.message))
+        resolve(stdout.trim())
+      })
+    })
 
-    const emailRegex = /[\w.-]+@[\w.-]+\.\w{2,}/g
-    const matches = emailProbeResponse.match(emailRegex)
-
-    if (matches && matches.length > 0) {
-      const validEmails = matches.filter(email =>
-        !email.includes('example.com') &&
-        !email.includes('test.com') &&
-        !email.includes('@email.com')
-      )
-      if (validEmails.length > 0) {
-        discoveredEmail = validEmails[0]
-        log(emit, `Discovered email capability: ${discoveredEmail}`)
+    if (gogOutput) {
+      // gog auth list outputs tab-separated: email\tdefault\tscopes\tdate\tmethod
+      const email = gogOutput.split('\n')[0]?.split('\t')[0]
+      if (email && email.includes('@')) {
+        discoveredEmail = email
+        log(emit, `Discovered gog email account: ${discoveredEmail}`)
       }
     }
 
     if (!discoveredEmail) {
-      log(emit, 'No email capability detected. Indirect injection tests will be skipped.', 'warn')
+      log(emit, 'No gog email account found. Indirect injection tests will be skipped.', 'warn')
     }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
-    log(emit, `Email discovery failed: ${msg}. Skipping indirect injection.`, 'warn')
+    log(emit, `gog email discovery failed: ${msg}. Skipping indirect injection.`, 'warn')
   }
 
   state.discoveredEmail = discoveredEmail

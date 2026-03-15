@@ -12,9 +12,9 @@ export default function ScoreCircle({ score, size = 160 }: ScoreCircleProps): JS
   const targetOffset = circumference - (score / 100) * circumference
 
   const strokeColor = useMemo(() => {
-    if (score > 80) return '#22c55e'
-    if (score >= 50) return '#eab308'
-    return '#ef4444'
+    if (score > 80) return '#22d3ee'   // cyan-400
+    if (score >= 50) return '#f59e0b'  // amber-500
+    return '#ef4444'                   // red-500
   }, [score])
 
   const trackColor = '#27272a'
@@ -58,13 +58,13 @@ export default function ScoreCircle({ score, size = 160 }: ScoreCircleProps): JS
       {/* Center text */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span
-          className="font-bold leading-none text-zinc-100"
+          className="font-bold leading-none text-gray-100"
           style={{ fontSize: size * 0.28 }}
         >
           {score}
         </span>
         <span
-          className="text-zinc-500"
+          className="text-gray-500"
           style={{ fontSize: size * 0.1 }}
         >
           /100

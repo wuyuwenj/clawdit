@@ -20,7 +20,11 @@ type Action =
   | { type: 'TICK' }
   | { type: 'RESET' }
 
-function createInitialState(): ScanState {
+interface AppState extends ScanState {
+  startedAttackIds: Set<string>
+}
+
+function createInitialState(): AppState {
   return {
     id: '',
     status: ScanStatus.IDLE,
@@ -38,7 +42,8 @@ function createInitialState(): ScanState {
     overallScore: 100,
     topFindings: [],
     reconSummary: '',
-    log: []
+    log: [],
+    startedAttackIds: new Set()
   }
 }
 
@@ -54,7 +59,7 @@ function createEmptyCategory(category: AttackCategory): CategoryResult {
 
 // ── Reducer ────────────────────────────────────────────────────
 
-function scanReducer(state: ScanState, action: Action): ScanState {
+function scanReducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'START_SCAN': {
       return {
@@ -97,17 +102,15 @@ function scanReducer(state: ScanState, action: Action): ScanState {
           }
 
         case 'attack-start': {
+          const newStarted = new Set(state.startedAttackIds)
+          newStarted.add(event.attack.id)
           const categories = state.categories.map((cat) => {
             if (cat.category === event.attack.category) {
-              return {
-                ...cat,
-                status: 'running' as const,
-                attacks: [...cat.attacks, event.attack]
-              }
+              return { ...cat, status: 'running' as const }
             }
             return cat
           })
-          return { ...state, categories }
+          return { ...state, categories, startedAttackIds: newStarted }
         }
 
         case 'attack-result': {
@@ -138,6 +141,7 @@ function scanReducer(state: ScanState, action: Action): ScanState {
         case 'complete':
           return {
             ...event.state,
+            startedAttackIds: state.startedAttackIds,
             status: ScanStatus.COMPLETE,
             elapsed: Math.floor((Date.now() - state.startedAt) / 1000)
           }
@@ -264,7 +268,7 @@ export default function App(): JSX.Element {
   const showFindings = isComplete && view !== 'dashboard'
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#09090b] text-zinc-100 select-none-ui">
+    <div className="h-screen w-screen overflow-hidden bg-[#0a0a0c] text-gray-100 font-sans select-none-ui">
       {state.status === ScanStatus.IDLE && <ConnectForm onStartScan={handleStartScan} />}
       {showDashboard && (
         <ScanDashboard
