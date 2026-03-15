@@ -1,5 +1,9 @@
 # Clawdit
 
+[DEMO LINK](https://www.loom.com/share/5b28a99aa00a42efbe40122af2160dd9)
+
+[LANDING PAGE](https://clawdit-ten.vercel.app/)
+
 Clawdit is a desktop app that tests how easily an AI assistant can be tricked, misled, or pushed into unsafe behavior.
 
 It is made for people who want a fast, visual way to check whether an assistant stays careful when it sees suspicious messages, risky requests, emails, or calendar invites.
