@@ -5,15 +5,16 @@ let client: OpenAI | null = null
 
 function getClient(): OpenAI {
   if (!client) {
-    client = new OpenAI({
-      apiKey: process.env.NEBIUS_API_KEY ?? '',
-      baseURL: process.env.NEBIUS_BASE_URL ?? 'https://api.studio.nebius.com/v1/'
-    })
+    const baseURL = process.env.NEBIUS_BASE_URL || 'https://api.tokenfactory.nebius.com/v1/'
+    const apiKey = process.env.NEBIUS_API_KEY || ''
+    console.log('[nebius] baseURL:', baseURL)
+    console.log('[nebius] apiKey present:', apiKey.length > 0)
+    client = new OpenAI({ apiKey, baseURL })
   }
   return client
 }
 
-const MODEL = process.env.NEBIUS_MODEL ?? 'meta-llama/Meta-Llama-3.1-70B-Instruct'
+const MODEL = process.env.NEBIUS_MODEL || 'meta-llama/Llama-3.3-70B-Instruct'
 
 export interface GeneratedAttack {
   name: string

@@ -11,6 +11,7 @@ import ScoreCircle from './ScoreCircle'
 interface FindingsPanelProps {
   state: ScanState
   onReset: () => void
+  onViewLogs: () => void
 }
 
 // ── Category bar component ─────────────────────────────────────
@@ -169,7 +170,7 @@ function FindingCard({ result }: FindingCardProps): JSX.Element {
 
 // ── Main FindingsPanel ─────────────────────────────────────────
 
-export default function FindingsPanel({ state, onReset }: FindingsPanelProps): JSX.Element {
+export default function FindingsPanel({ state, onReset, onViewLogs }: FindingsPanelProps): JSX.Element {
   const isError = state.status === ScanStatus.ERROR
   const findings = state.topFindings.filter((r) => r.compromised)
   const hasFindings = findings.length > 0
@@ -267,11 +268,17 @@ export default function FindingsPanel({ state, onReset }: FindingsPanelProps): J
           )}
         </div>
 
-        {/* ── Scan Again button ─────────────────────── */}
-        <div className="flex justify-center pb-8">
+        {/* ── Action buttons ────────────────────────── */}
+        <div className="flex justify-center gap-3 pb-8">
+          <button
+            onClick={onViewLogs}
+            className="rounded-lg border border-zinc-700 bg-zinc-800 px-6 py-2.5 text-sm font-medium text-zinc-300 hover:border-zinc-600 hover:bg-zinc-700 hover:text-zinc-100"
+          >
+            View Logs
+          </button>
           <button
             onClick={onReset}
-            className="rounded-lg border border-zinc-700 bg-zinc-800 px-6 py-2.5 text-sm font-medium text-zinc-300 hover:border-zinc-600 hover:bg-zinc-700 hover:text-zinc-100"
+            className="rounded-lg border border-emerald-600/50 bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500"
           >
             Scan Again
           </button>

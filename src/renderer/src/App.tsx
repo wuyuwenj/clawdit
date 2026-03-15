@@ -220,15 +220,30 @@ export default function App(): JSX.Element {
   )
 
   const handleReset = useCallback(() => {
+    setView('auto')
     dispatch({ type: 'RESET' })
   }, [])
+
+  const isComplete = state.status === ScanStatus.COMPLETE || state.status === ScanStatus.ERROR
+  const showDashboard =
+    state.status === ScanStatus.RUNNING || (isComplete && view === 'dashboard')
+  const showFindings = isComplete && view !== 'dashboard'
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-[#09090b] text-zinc-100 select-none-ui">
       {state.status === ScanStatus.IDLE && <ConnectForm onStartScan={handleStartScan} />}
-      {state.status === ScanStatus.RUNNING && <ScanDashboard state={state} />}
-      {(state.status === ScanStatus.COMPLETE || state.status === ScanStatus.ERROR) && (
-        <FindingsPanel state={state} onReset={handleReset} />
+      {showDashboard && (
+        <ScanDashboard
+          state={state}
+          onViewFindings={isComplete ? () => setView('findings') : undefined}
+        />
+      )}
+      {showFindings && (
+        <FindingsPanel
+          state={state}
+          onReset={handleReset}
+          onViewLogs={() => setView('dashboard')}
+        />
       )}
     </div>
   )

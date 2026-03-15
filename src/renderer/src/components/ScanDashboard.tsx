@@ -6,6 +6,7 @@ import LiveLog from './LiveLog'
 
 interface ScanDashboardProps {
   state: ScanState
+  onViewFindings?: () => void
 }
 
 const PHASE_LABELS: Record<ScanPhase, string> = {
@@ -33,7 +34,7 @@ function getScoreColor(score: number): string {
   return 'text-red-400'
 }
 
-export default function ScanDashboard({ state }: ScanDashboardProps): JSX.Element {
+export default function ScanDashboard({ state, onViewFindings }: ScanDashboardProps): JSX.Element {
   const allResults = useMemo(
     () => state.categories.flatMap((c) => c.results).sort((a, b) => a.timestamp - b.timestamp),
     [state.categories]
@@ -110,6 +111,19 @@ export default function ScanDashboard({ state }: ScanDashboardProps): JSX.Elemen
             {state.overallScore}
           </span>
         </div>
+
+        {/* View Results button (shown when scan is complete) */}
+        {onViewFindings && (
+          <>
+            <div className="h-4 w-px bg-zinc-700" />
+            <button
+              onClick={onViewFindings}
+              className="rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-3 py-1.5 text-xs font-medium text-emerald-400 hover:bg-emerald-500/25"
+            >
+              View Results
+            </button>
+          </>
+        )}
       </div>
 
       {/* ── Main content area ───────────────────────── */}
