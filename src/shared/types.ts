@@ -117,7 +117,7 @@ export const CATEGORY_LABELS: Record<AttackCategory, string> = {
   [AttackCategory.DATA_LEAKAGE]: 'Data Leakage',
   [AttackCategory.UNAUTHORIZED_ACTIONS]: 'Unauthorized Actions',
   [AttackCategory.ACCESS_CONTROL]: 'Access Control',
-  [AttackCategory.INDIRECT_INJECTION]: 'Indirect Injection',
+  [AttackCategory.INDIRECT_INJECTION]: 'Email Injection',
   [AttackCategory.CALENDAR_INJECTION]: 'Calendar Injection'
 }
 

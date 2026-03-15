@@ -132,7 +132,7 @@ export async function runScan(
     }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
-    log(emit, `gog email discovery failed: ${msg}. Skipping indirect injection.`, 'warn')
+      log(emit, `gog email discovery failed: ${msg}. Skipping email injection.`, 'warn')
   }
 
   state.discoveredEmail = discoveredEmail
@@ -147,7 +147,7 @@ export async function runScan(
         catResult.status = 'skipped'
         catResult.score = 100
         catResult.skipReason = 'No email capability detected'
-        log(emit, `INDIRECT_INJECTION: Skipped (no email capability detected)`)
+        log(emit, `EMAIL_INJECTION: Skipped (no email capability detected)`)
         emit({ type: 'category-update', category: { ...catResult } })
         continue
       }
