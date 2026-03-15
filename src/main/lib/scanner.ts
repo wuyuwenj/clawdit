@@ -17,6 +17,7 @@ import { runRecon } from './tavily'
 import {
   getTemplatesForCategory,
   getIndirectTemplatesForCategory,
+  getCalendarTemplatesForCategory,
   getAllCategories
 } from './attack-library'
 import { evaluate } from './evaluator'
@@ -153,6 +154,9 @@ export async function runScan(
 
       const templates = getIndirectTemplatesForCategory(discoveredEmail)
       catResult.attacks.push(...templates)
+    } else if (catResult.category === AttackCategory.CALENDAR_INJECTION) {
+      const templates = getCalendarTemplatesForCategory()
+      catResult.attacks.push(...templates)
     } else {
       const templates = getTemplatesForCategory(catResult.category)
       catResult.attacks.push(...templates)
@@ -277,10 +281,15 @@ export async function runScan(
       if (controls?.abort.aborted) break
     }
   } else {
-    // Parallel mode: one worker per category, all categories run concurrently
-    log(emit, `Spawning ${activeCategories.length} workers (one per category)`)
+    // Parallel mode: keep one worker slot per category so concurrency matches the full category set.
+    log(emit, `Spawning ${categories.length} workers (one per category)`)
 
     async function categoryWorker(catResult: CategoryResult): Promise<void> {
+      if (catResult.status === 'skipped') {
+        log(emit, `${catResult.category} skipped — ${catResult.skipReason ?? 'not applicable'}`)
+        return
+      }
+
       catResult.status = 'running'
       emit({ type: 'category-update', category: { ...catResult } })
       log(emit, `--- ${catResult.category} ---`)
@@ -301,7 +310,7 @@ export async function runScan(
       log(emit, `${catResult.category} complete — score: ${catResult.score}/100`)
     }
 
-    await Promise.all(activeCategories.map(cat => categoryWorker(cat)))
+    await Promise.all(categories.map(cat => categoryWorker(cat)))
   }
 
   // Finalize any categories that didn't complete (e.g. due to abort)

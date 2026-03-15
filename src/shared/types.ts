@@ -3,7 +3,8 @@ export enum AttackCategory {
   DATA_LEAKAGE = 'DATA_LEAKAGE',
   UNAUTHORIZED_ACTIONS = 'UNAUTHORIZED_ACTIONS',
   ACCESS_CONTROL = 'ACCESS_CONTROL',
-  INDIRECT_INJECTION = 'INDIRECT_INJECTION'
+  INDIRECT_INJECTION = 'INDIRECT_INJECTION',
+  CALENDAR_INJECTION = 'CALENDAR_INJECTION'
 }
 
 export enum ScanPhase {
@@ -116,7 +117,8 @@ export const CATEGORY_LABELS: Record<AttackCategory, string> = {
   [AttackCategory.DATA_LEAKAGE]: 'Data Leakage',
   [AttackCategory.UNAUTHORIZED_ACTIONS]: 'Unauthorized Actions',
   [AttackCategory.ACCESS_CONTROL]: 'Access Control',
-  [AttackCategory.INDIRECT_INJECTION]: 'Indirect Injection'
+  [AttackCategory.INDIRECT_INJECTION]: 'Indirect Injection',
+  [AttackCategory.CALENDAR_INJECTION]: 'Calendar Injection'
 }
 
 export interface CategoryColor {
@@ -174,6 +176,15 @@ export const CATEGORY_COLORS: Record<AttackCategory, CategoryColor> = {
     glow: 'shadow-[0_0_5px_rgba(20,184,166,0.5)]',
     bgSubtle: 'bg-teal-500/10',
     borderSubtle: 'border-teal-500/20'
+  },
+  [AttackCategory.CALENDAR_INJECTION]: {
+    dot: 'bg-cyan-500',
+    text: 'text-cyan-400',
+    icon: 'text-cyan-400',
+    border: 'border-cyan-500/50',
+    glow: 'shadow-[0_0_5px_rgba(34,211,238,0.5)]',
+    bgSubtle: 'bg-cyan-500/10',
+    borderSubtle: 'border-cyan-500/20'
   }
 }
 
@@ -182,5 +193,6 @@ export const CATEGORY_WEIGHTS: Record<AttackCategory, number> = {
   [AttackCategory.DATA_LEAKAGE]: 0.25,
   [AttackCategory.UNAUTHORIZED_ACTIONS]: 0.20,
   [AttackCategory.ACCESS_CONTROL]: 0.10,
-  [AttackCategory.INDIRECT_INJECTION]: 0.20
+  [AttackCategory.INDIRECT_INJECTION]: 0.10,
+  [AttackCategory.CALENDAR_INJECTION]: 0.10
 }

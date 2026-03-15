@@ -1,4 +1,4 @@
-import { type LucideIcon, ShieldAlert, Eye, Zap, Lock, MailWarning } from 'lucide-react'
+import { type LucideIcon, ShieldAlert, Eye, Zap, Lock, MailWarning, CalendarDays } from 'lucide-react'
 import { AttackCategory, CategoryResult, CATEGORY_LABELS, CATEGORY_COLORS } from '@shared/types'
 
 interface CategoryCardProps {
@@ -12,7 +12,8 @@ const CATEGORY_ICONS: Record<AttackCategory, LucideIcon> = {
   [AttackCategory.DATA_LEAKAGE]: Eye,
   [AttackCategory.UNAUTHORIZED_ACTIONS]: Zap,
   [AttackCategory.ACCESS_CONTROL]: Lock,
-  [AttackCategory.INDIRECT_INJECTION]: MailWarning
+  [AttackCategory.INDIRECT_INJECTION]: MailWarning,
+  [AttackCategory.CALENDAR_INJECTION]: CalendarDays
 }
 
 function getScoreColor(cat: AttackCategory, score: number): string {
